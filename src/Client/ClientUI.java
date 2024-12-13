@@ -17,6 +17,7 @@ public class ClientUI extends JFrame {
     private FriendsPanel friendsPanel;
     private ChatPanel chatPanel;
     private MemoPanel memoPanel;
+    private JPanel menuPanel;
 
     private JTabbedPane leftTabbedPane;
 
@@ -41,35 +42,64 @@ public class ClientUI extends JFrame {
     }
 
     private void initializeUI() {
-        frame.setSize(400, 800);
+        frame.setSize(500, 700);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
         Font defaultFont = new Font("SansSerif", Font.PLAIN, 16);
         UIManager.put("Label.font", defaultFont);
         UIManager.put("Button.font", defaultFont);
-        UIManager.put("TextField.font", defaultFont);
-        UIManager.put("TextArea.font", defaultFont);
-        UIManager.put("List.font", defaultFont);
-        UIManager.put("TabbedPane.font", defaultFont);
 
         authPanel = new AuthPanel();
         friendsPanel = new FriendsPanel();
         chatPanel = new ChatPanel();
         memoPanel = new MemoPanel();
 
-        // 탭 구성
-        leftTabbedPane = new JTabbedPane(JTabbedPane.TOP);
-        leftTabbedPane.addTab("친구", friendsPanel);
-        leftTabbedPane.addTab("채팅", chatPanel);
-        leftTabbedPane.addTab("메모", memoPanel);
-        leftTabbedPane.setSelectedIndex(1);
+        // 왼쪽 버튼 메뉴
+        menuPanel = new JPanel();
+        menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.Y_AXIS)); // 세로 배치
+        menuPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8)); // 패널 여백 추가
 
-        JPanel chatContainerPanel = new JPanel(new BorderLayout());
-        chatContainerPanel.add(leftTabbedPane, BorderLayout.CENTER);
+        JButton friendsButton = new JButton("친구");
+        JButton chatButton = new JButton("채팅");
+        JButton memoButton = new JButton("메모");
 
+        // 버튼 크기 조정
+        Dimension buttonSize = new Dimension(80, 40); // 버튼 크기 설정
+        friendsButton.setMaximumSize(buttonSize);
+        chatButton.setMaximumSize(buttonSize);
+        memoButton.setMaximumSize(buttonSize);
+
+        // 버튼 상단 정렬
+        friendsButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        chatButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        memoButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // 메뉴 패널에 버튼 추가
+        menuPanel.add(friendsButton);
+        menuPanel.add(Box.createVerticalStrut(8)); // 버튼 간 여백
+        menuPanel.add(chatButton);
+        menuPanel.add(Box.createVerticalStrut(8));
+        menuPanel.add(memoButton);
+        menuPanel.add(Box.createVerticalGlue()); // 하단 여백
+
+        // 초기 상태에서는 숨김
+        menuPanel.setVisible(false);
+
+        // 중앙 화면 패널
         mainPanel.add(authPanel, "auth");
-        mainPanel.add(chatContainerPanel, "chat");
+        mainPanel.add(friendsPanel, "friends");
+        mainPanel.add(chatPanel, "chat");
+        mainPanel.add(memoPanel, "memo");
 
-        frame.getContentPane().add(mainPanel);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        // 버튼 클릭 이벤트
+        friendsButton.addActionListener(e -> cardLayout.show(mainPanel, "friends"));
+        chatButton.addActionListener(e -> cardLayout.show(mainPanel, "chat"));
+        memoButton.addActionListener(e -> cardLayout.show(mainPanel, "memo"));
+
+        // 전체 레이아웃
+        frame.setLayout(new BorderLayout());
+        frame.add(menuPanel, BorderLayout.WEST);
+        frame.add(mainPanel, BorderLayout.CENTER);
 
         registerEventListeners();
     }
@@ -110,14 +140,17 @@ public class ClientUI extends JFrame {
 
     public void switchToSignup() {
         authPanel.showSignupPanel();
+        menuPanel.setVisible(false); // 메뉴 숨기기
     }
 
     public void switchToLogin() {
         authPanel.showLoginPanel();
+        menuPanel.setVisible(false); // 메뉴 숨기기
     }
 
     public void switchToChatPanel() {
         cardLayout.show(mainPanel, "chat");
+        menuPanel.setVisible(true); // 메뉴 표시
     }
 
     private void attemptLogin() {
