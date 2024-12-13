@@ -8,7 +8,7 @@ import java.net.*;
 import java.util.*;
 import java.util.List;
 
-public class ClientApp {
+public class ClientApp extends JFrame {
     private String serverAddress = "localhost";
     private int serverPort = 12345;
     private Socket socket;
