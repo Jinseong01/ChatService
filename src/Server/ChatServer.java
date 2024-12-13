@@ -1,3 +1,8 @@
+package Server;
+
+import Model.ChatRoom;
+import Model.User;
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -5,20 +10,27 @@ import java.util.concurrent.*;
 
 public class ChatServer {
     private static final int PORT = 12345;
-    // 사용자 정보: loginID -> User
+    // 사용자 정보: loginID -> Model.User
     private static Map<String, User> userCredentials = new ConcurrentHashMap<>();
 
     // 사용자 상태: loginID -> ClientHandler
     private static Map<String, ClientHandler> onlineUsers = new ConcurrentHashMap<>();
 
-    // 친구 목록: loginID -> Set<loginID>
-    private static Map<String, Set<String>> friendsList = new ConcurrentHashMap<>();
-    // 친구 요청: loginID -> Set<loginID>
-    private static Map<String, Set<String>> friendRequests = new ConcurrentHashMap<>();
-    // 채팅방: chatRoomId -> ChatRoom
+    // 채팅방: chatRoomId -> Model.ChatRoom
     private static Map<String, ChatRoom> chatRooms = new ConcurrentHashMap<>();
+
+    // 친구 목록: loginID -> Set<loginID>
+    // test : ["사용자 로그인 ID1", "사용자 로그인 ID2", "사용자 로그인 ID3", ...]
+    private static Map<String, Set<String>> friendsList = new ConcurrentHashMap<>();
+
+    // 친구 요청: loginID -> Set<loginID>
+    // test : ["사용자 로그인 ID1", "사용자 로그인 ID2", "사용자 로그인 ID3", ...]
+    private static Map<String, Set<String>> friendRequests = new ConcurrentHashMap<>();
+
     // 메모: loginID -> List<memoContent>
+    // test : ["메모1", "메모2"]
     private static Map<String, List<String>> userMemos = new ConcurrentHashMap<>();
+
 
     public static void main(String[] args) {
         System.out.println("서버 시작 중...");

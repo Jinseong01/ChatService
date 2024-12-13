@@ -1,16 +1,18 @@
-// User.java
-import java.io.Serializable;
+package Model;// Model.User.java
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
-public class User implements Serializable {
-    private String loginID;
-    private String loginPW;
-    private String userName;
-    private String birthday;
-    private String nickname;
-    private String information;
-    private List<String> memos;
+public class User {
+    private String loginID; // 로그인ID
+    private String loginPW; // 로그인PW
+    private String userName; // 사용자 이름
+    private String birthday; // 생일
+    private String nickname; // 닉네임
+    private String information; // 상태 메시지(?)
+    private Set<String> friends; // 친구 목록
+    private List<String> memos; // 메모 목록
 
     public User(String loginID, String loginPW, String userName, String birthday, String nickname, String information) {
         this.loginID = loginID;
@@ -22,7 +24,7 @@ public class User implements Serializable {
         this.memos = new ArrayList<>();
     }
 
-    // Getter and Setter methods
+    // Getter & Setter
     public String getLoginID() {
         return loginID;
     }
@@ -71,10 +73,26 @@ public class User implements Serializable {
         this.information = information;
     }
 
+    public Set<String> getFriends() {
+        return friends;
+    }
+
+    public void setFriends(Set<String> friends) {
+        this.friends = friends;
+    }
+
     public List<String> getMemos() {
         return memos;
     }
 
+    public void setMemos(List<String> memos) {
+        this.memos = memos;
+    }
+
+    // 친구 목록 관련
+
+
+    // 메모 목록 관련
     public void addMemo(String memo) {
         this.memos.add(memo);
     }
