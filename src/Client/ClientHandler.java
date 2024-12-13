@@ -15,7 +15,7 @@ public class ClientHandler {
     private String loginID = null;
 
     // 채팅방ID -> ChatWindow 맵
-    private Map<String, ClientUI.ChatWindow> chatWindows = new HashMap<>();
+    private Map<String, ChatWindow> chatWindows = new HashMap<>();
 
     public ClientHandler(ClientUI ui) {
         this.ui = ui;
@@ -48,11 +48,11 @@ public class ClientHandler {
         this.loginID = loginID;
     }
 
-    public void addChatWindow(String chatRoomId, ClientUI.ChatWindow cw) {
+    public void addChatWindow(String chatRoomId, ChatWindow cw) {
         chatWindows.put(chatRoomId, cw);
     }
 
-    public ClientUI.ChatWindow getChatWindow(String chatRoomId) {
+    public ChatWindow getChatWindow(String chatRoomId) {
         return chatWindows.get(chatRoomId);
     }
 
@@ -66,14 +66,14 @@ public class ClientHandler {
                     if (msg.startsWith("/chathistorystart ")) {
                         String[] tokens = msg.split(" ", 2);
                         String chatRoomId = tokens[1];
-                        ClientUI.ChatWindow cw = chatWindows.get(chatRoomId);
+                        ChatWindow cw = chatWindows.get(chatRoomId);
                         if (cw != null) {
                             cw.handleChatHistoryStart();
                         }
                     } else if (msg.startsWith("/chathistoryend ")) {
                         String[] tokens = msg.split(" ", 2);
                         String chatRoomId = tokens[1];
-                        ClientUI.ChatWindow cw = chatWindows.get(chatRoomId);
+                        ChatWindow cw = chatWindows.get(chatRoomId);
                         if (cw != null) {
                             cw.handleChatHistoryEnd();
                         }
@@ -81,7 +81,7 @@ public class ClientHandler {
                         String[] tokens = msg.split(" ", 4);
                         if (tokens.length == 4) {
                             String chatRoomId = tokens[1];
-                            ClientUI.ChatWindow cw = chatWindows.get(chatRoomId);
+                            ChatWindow cw = chatWindows.get(chatRoomId);
                             if (cw != null) {
                                 cw.handleChatMessage(msg);
                             }

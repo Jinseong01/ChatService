@@ -19,11 +19,21 @@ public class ServerApp {
         put("tmp2", new User("tmp2", "1234", "허준영", "2001-01-51", "닉네임", "정보"));
     }};
 
+    // 현재 접속자 목록 : { loginID : ClientHandler }
+    public static Map<String, UserHandler> onlineUsers = new ConcurrentHashMap<>();
+
+    // 채팅방 : { chatRoomId : ChatRoom }
+    public static Map<String, ChatRoom> chatRooms = new ConcurrentHashMap<>();
+
+    // 친구 요청 : { loginID : ["친구A", "친구B", "친구C"] }
+    public static Map<String, Set<String>> friendRequests = new ConcurrentHashMap<>();
+
     static {
         // test 계정에 기본 친구 추가 (tmp1, tmp2)
         User testUser = userCredentials.get("test");
         testUser.getFriends().add("tmp1");
         testUser.getFriends().add("tmp2");
+        friendRequests.put("test", ConcurrentHashMap.newKeySet());
 
         User testUser2 = userCredentials.get("tmp1");
         testUser2.getFriends().add("test");
@@ -35,15 +45,6 @@ public class ServerApp {
         testUser.getMemos().add("기본 메모 1");
         testUser.getMemos().add("기본 메모 2");
     }
-
-    // 현재 접속자 목록 : { loginID : ClientHandler }
-    public static Map<String, UserHandler> onlineUsers = new ConcurrentHashMap<>();
-
-    // 채팅방 : { chatRoomId : ChatRoom }
-    public static Map<String, ChatRoom> chatRooms = new ConcurrentHashMap<>();
-
-    // 친구 요청 : { loginID : ["친구A", "친구B", "친구C"] }
-    public static Map<String, Set<String>> friendRequests = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
         System.out.println("서버 시작 중...");
