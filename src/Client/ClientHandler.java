@@ -3,16 +3,16 @@ package Client;
 import java.io.*;
 import java.net.*;
 
-public class ChatClientController {
+public class ClientHandler {
     private String serverAddress = "localhost";
     private int serverPort = 12345;
     private Socket socket;
     private BufferedReader in;
     private PrintWriter out;
 
-    private ChatClientUI ui;
+    private ClientUI ui;
 
-    public ChatClientController(ChatClientUI ui) {
+    public ClientHandler(ClientUI ui) {
         this.ui = ui;
         connectToServer();
     }

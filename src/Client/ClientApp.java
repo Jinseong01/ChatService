@@ -8,7 +8,7 @@ import java.net.*;
 import java.util.*;
 import java.util.List;
 
-public class ChatClient {
+public class ClientApp {
     private String serverAddress = "localhost";
     private int serverPort = 12345;
     private Socket socket;
@@ -66,7 +66,7 @@ public class ChatClient {
     // 채팅방ID -> ChatWindow 맵
     private Map<String, ChatWindow> chatWindows = new HashMap<>();
 
-    public ChatClient() {
+    public ClientApp() {
         initializeUI();
         frame.setVisible(true);
         connectToServer();
@@ -745,6 +745,6 @@ public class ChatClient {
         }
     }
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(ChatClient::new);
+        SwingUtilities.invokeLater(ClientApp::new);
     }
 }

@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class ChatClientUI {
+public class ClientUI {
     private JFrame frame = new JFrame("Java Chat (Mobile Style)");
     private CardLayout cardLayout = new CardLayout();
     private JPanel mainPanel = new JPanel(cardLayout);
@@ -27,7 +27,7 @@ public class ChatClientUI {
     private JButton registerButton = new JButton("회원가입 완료");
 
     private JPanel chatPanel = new JPanel(new BorderLayout());
-    private JTabbedPane leftTabbedPane = new JTabbedPane(JTabbedPane.TOP);
+    private JTabbedPane leftTabbedPane = new JTabbedPane(JTabbedPane.LEFT);  // 탭 위치 변경
 
     private JPanel friendsTab = new JPanel(new BorderLayout());
     private DefaultListModel<String> friendsListModel = new DefaultListModel<>();
@@ -39,9 +39,9 @@ public class ChatClientUI {
     private JList<String> chatRoomsListUI = new JList<>(chatRoomsListModel);
     private JButton createChatButton = new JButton("채팅방 생성");
 
-    private ChatClientController controller;
+    private ClientHandler controller;
 
-    public ChatClientUI(ChatClientController controller) {
+    public ClientUI(ClientHandler controller) {
         this.controller = controller;
         initializeUI();
         frame.setVisible(true);
@@ -57,6 +57,7 @@ public class ChatClientUI {
         UIManager.put("List.font", defaultFont);
         UIManager.put("TabbedPane.font", defaultFont);
 
+        // 로그인 화면 구성
         loginPanel.setLayout(new BoxLayout(loginPanel, BoxLayout.Y_AXIS));
         loginPanel.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
         JLabel loginTitle = new JLabel("로그인", SwingConstants.CENTER);
@@ -72,6 +73,7 @@ public class ChatClientUI {
         loginPanel.add(Box.createVerticalStrut(20));
         loginPanel.add(loginBtnPanel);
 
+        // 회원가입 화면 구성
         signupPanel.setLayout(new BoxLayout(signupPanel, BoxLayout.Y_AXIS));
         signupPanel.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
         JLabel signupTitle = new JLabel("회원가입", SwingConstants.CENTER);
@@ -97,7 +99,7 @@ public class ChatClientUI {
         authPanel.add(signupPanel, "signup");
         mainPanel.add(authPanel, "auth");
 
-        // Add friends, chat, memo tabs
+        // 채팅 화면 구성
         initializeFriendsTab();
         initializeChatTab();
 
@@ -107,6 +109,7 @@ public class ChatClientUI {
         frame.getContentPane().add(mainPanel);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        // 로그인, 회원가입 버튼 액션 리스너
         loginButton.addActionListener(e -> controller.login(loginUserField.getText(), new String(loginPassField.getPassword())));
         signupButton.addActionListener(e -> controller.switchToSignup());
         registerButton.addActionListener(e -> controller.register(
@@ -127,22 +130,26 @@ public class ChatClientUI {
     }
 
     private void initializeFriendsTab() {
+        // 친구 목록 화면
         JPanel friendsListPanel = new JPanel(new BorderLayout());
         friendsListPanel.setBorder(BorderFactory.createTitledBorder("친구 목록"));
         friendsListPanel.add(new JScrollPane(friendsListUI), BorderLayout.CENTER);
         friendsListPanel.add(addFriendButton, BorderLayout.SOUTH);
         friendsTab.add(friendsListPanel, BorderLayout.CENTER);
 
+        // 친구 탭에 추가
         leftTabbedPane.addTab("친구", friendsTab);
     }
 
     private void initializeChatTab() {
+        // 채팅방 목록 화면
         JPanel chatRoomsPanel = new JPanel(new BorderLayout());
         chatRoomsPanel.setBorder(BorderFactory.createTitledBorder("채팅방 목록"));
         chatRoomsPanel.add(new JScrollPane(chatRoomsListUI), BorderLayout.CENTER);
         chatRoomsPanel.add(createChatButton, BorderLayout.SOUTH);
         chatTab.add(chatRoomsPanel, BorderLayout.CENTER);
 
+        // 채팅 탭에 추가
         leftTabbedPane.addTab("채팅", chatTab);
     }
 
