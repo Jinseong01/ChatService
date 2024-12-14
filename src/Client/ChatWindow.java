@@ -42,7 +42,7 @@ public class ChatWindow extends JFrame {
 
         // + 버튼 클릭 시 동작
         additionalOptionsButton.addActionListener(e -> {
-            AdditionalOptionsWindow optionsWindow = new AdditionalOptionsWindow();
+            AdditionalOptionsWindow optionsWindow = new AdditionalOptionsWindow(handler); // handler 전달
             optionsWindow.setVisible(true);
         });
 
