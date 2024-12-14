@@ -4,22 +4,23 @@ import javax.swing.*;
 import java.awt.*;
 
 public class AuthPanel extends JPanel {
+    private static final Dimension FIELD_DIMENSION = new Dimension(200, 40); // 텍스트 필드와 버튼 높이 설정
     private CardLayout cardLayout = new CardLayout();
     private JPanel loginPanel = new JPanel();
     private JPanel signupPanel = new JPanel();
 
-    private JTextField loginUserField = new JTextField(15);
-    private JPasswordField loginPassField = new JPasswordField(15);
-    private JButton loginButton = new JButton("로그인");
-    private JButton signupButton = new JButton("회원가입");
+    private JTextField loginUserField = createSizedTextField();
+    private JPasswordField loginPassField = createSizedPasswordField();
+    private JButton loginButton = createSizedButton("로그인");
+    private JButton signupButton = createSizedButton("회원가입");
 
-    private JTextField signupLoginIDField = new JTextField(15);
-    private JPasswordField signupLoginPWField = new JPasswordField(15);
-    private JTextField signupUserNameField = new JTextField(15);
-    private JTextField signupBirthdayField = new JTextField(15);
-    private JTextField signupNicknameField = new JTextField(15);
+    private JTextField signupLoginIDField = createSizedTextField();
+    private JPasswordField signupLoginPWField = createSizedPasswordField();
+    private JTextField signupUserNameField = createSizedTextField();
+    private JTextField signupBirthdayField = createSizedTextField();
+    private JTextField signupNicknameField = createSizedTextField();
     private JTextArea signupInformationArea = new JTextArea(3, 15);
-    private JButton registerButton = new JButton("회원가입 완료");
+    private JButton registerButton = createSizedButton("회원가입 완료");
 
     public AuthPanel() {
         setLayout(cardLayout);
@@ -30,141 +31,89 @@ public class AuthPanel extends JPanel {
     }
 
     private void createLoginPanel() {
-        loginPanel.setLayout(new BoxLayout(loginPanel, BoxLayout.Y_AXIS));
-        loginPanel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50)); // 여백 추가
+        loginPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = createGbc();
 
-        // ID 입력 필드
-        JPanel idPanel = new JPanel();
-        idPanel.setLayout(new BorderLayout());
-        idPanel.setMaximumSize(new Dimension(200, 60)); // 크기 조정
-        loginUserField.setFont(new Font("SansSerif", Font.PLAIN, 18)); // 폰트 크기 설정
-        loginUserField.setPreferredSize(new Dimension(200, 40)); // 높이 조정
-        idPanel.add(new JLabel("ID"), BorderLayout.NORTH);
-        idPanel.add(loginUserField, BorderLayout.CENTER);
+        // 제목
+        addComponent(loginPanel, gbc, 0, 0, 2, new JLabel("로그인", SwingConstants.CENTER), 20);
 
-        // PW 입력 필드
-        JPanel pwPanel = new JPanel();
-        pwPanel.setLayout(new BorderLayout());
-        pwPanel.setMaximumSize(new Dimension(200, 60)); // 크기 조정
-        loginPassField.setFont(new Font("SansSerif", Font.PLAIN, 18)); // 폰트 크기 설정
-        loginPassField.setPreferredSize(new Dimension(200, 40)); // 높이 조정
-        pwPanel.add(new JLabel("PW"), BorderLayout.NORTH);
-        pwPanel.add(loginPassField, BorderLayout.CENTER);
+        // ID와 PW 필드
+        addField(loginPanel, gbc, "ID:", loginUserField, 1);
+        addField(loginPanel, gbc, "PW:", loginPassField, 2);
 
-        // 버튼 패널
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
-        buttonPanel.setAlignmentX(Component.CENTER_ALIGNMENT); // 가운데 정렬
-        loginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        signupButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // 버튼
+        addComponent(loginPanel, gbc, 0, 3, 2, loginButton, 30);
+        addComponent(loginPanel, gbc, 0, 4, 2, signupButton, 10);
 
-        // 버튼에 간격 추가
-        buttonPanel.add(loginButton);
-        buttonPanel.add(Box.createVerticalStrut(10)); // 버튼 간 간격
-        buttonPanel.add(signupButton);
-
-        // 패널에 컴포넌트 추가
-        loginPanel.add(Box.createVerticalGlue()); // 상단 여백
-        loginPanel.add(idPanel);
-        loginPanel.add(Box.createVerticalStrut(20)); // ID와 PW 간격
-        loginPanel.add(pwPanel);
-        loginPanel.add(Box.createVerticalStrut(40)); // 필드와 버튼 간격
-        loginPanel.add(buttonPanel);
-        loginPanel.add(Box.createVerticalGlue()); // 하단 여백
+        signupButton.addActionListener(e -> showSignupPanel());
     }
 
     private void createSignupPanel() {
-        signupPanel.setLayout(new GridBagLayout()); // GridBagLayout으로 변경
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10); // 컴포넌트 간의 간격
-        gbc.fill = GridBagConstraints.HORIZONTAL; // 컴포넌트 크기 조정
+        signupPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = createGbc();
 
-        // 제목 라벨
-        JLabel signupTitle = new JLabel("회원가입", SwingConstants.CENTER);
-        signupTitle.setFont(new Font("SansSerif", Font.BOLD, 20));
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2; // 가로로 두 칸 차지
-        signupPanel.add(signupTitle, gbc);
+        // 제목
+        addComponent(signupPanel, gbc, 0, 0, 2, new JLabel("회원가입", SwingConstants.CENTER), 20);
 
-        // 제목과 입력 필드 간격 추가
-        gbc.gridy++;
-        gbc.insets = new Insets(10, 10, 10, 10); // 위쪽 간격을 늘림
-        signupPanel.add(Box.createVerticalStrut(20), gbc);
+        // 입력 필드
+        addField(signupPanel, gbc, "로그인 ID:", signupLoginIDField, 1);
+        addField(signupPanel, gbc, "비밀번호:", signupLoginPWField, 2);
+        addField(signupPanel, gbc, "사용자 이름:", signupUserNameField, 3);
+        addField(signupPanel, gbc, "생일(YYYY-MM-DD):", signupBirthdayField, 4);
+        addField(signupPanel, gbc, "닉네임:", signupNicknameField, 5);
 
-        // 로그인 ID 필드
-        gbc.gridwidth = 1; // 한 칸으로 복원
-        gbc.gridy++;
-        signupPanel.add(new JLabel("로그인 ID:"), gbc);
-        gbc.gridx = 1;
-        signupLoginIDField.setPreferredSize(new Dimension(200, 40)); // 크기 조정
-        signupPanel.add(signupLoginIDField, gbc);
+        // 정보 텍스트 영역
+        addComponent(signupPanel, gbc, 0, 6, 2, new JScrollPane(signupInformationArea), 10);
+        signupInformationArea.setLineWrap(true);
+        signupInformationArea.setWrapStyleWord(true);
 
-        // 비밀번호 필드
-        gbc.gridx = 0;
-        gbc.gridy++;
-        signupPanel.add(new JLabel("비밀번호:"), gbc);
-        gbc.gridx = 1;
-        signupLoginPWField.setPreferredSize(new Dimension(200, 40));
-        signupPanel.add(signupLoginPWField, gbc);
-
-        // 사용자 이름 필드
-        gbc.gridx = 0;
-        gbc.gridy++;
-        signupPanel.add(new JLabel("사용자 이름:"), gbc);
-        gbc.gridx = 1;
-        signupUserNameField.setPreferredSize(new Dimension(200, 40));
-        signupPanel.add(signupUserNameField, gbc);
-
-        // 생일 필드
-        gbc.gridx = 0;
-        gbc.gridy++;
-        signupPanel.add(new JLabel("생일(YYYY-MM-DD):"), gbc);
-        gbc.gridx = 1;
-        signupBirthdayField.setPreferredSize(new Dimension(200, 40));
-        signupPanel.add(signupBirthdayField, gbc);
-
-        // 닉네임 필드
-        gbc.gridx = 0;
-        gbc.gridy++;
-        signupPanel.add(new JLabel("닉네임:"), gbc);
-        gbc.gridx = 1;
-        signupNicknameField.setPreferredSize(new Dimension(200, 40));
-        signupPanel.add(signupNicknameField, gbc);
-
-        // 정보 필드
-        gbc.gridx = 0;
-        gbc.gridy++;
-        signupPanel.add(new JLabel("정보:"), gbc);
-        gbc.gridx = 1;
-        signupInformationArea.setLineWrap(true); // 텍스트 줄바꿈 설정
-        signupInformationArea.setWrapStyleWord(true); // 단어 단위로 줄바꿈
-        signupInformationArea.setPreferredSize(new Dimension(200, 100)); // 크기 키움
-        signupPanel.add(new JScrollPane(signupInformationArea), gbc);
-
-        // 회원가입 버튼
-        gbc.gridx = 0;
-        gbc.gridy++;
-        gbc.gridwidth = 2; // 가로로 두 칸 차지
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.insets = new Insets(30, 10, 5, 10); // 위쪽 간격 줄임 (기본 10 → 5)
-        registerButton.setPreferredSize(new Dimension(200, 40)); // 크기 설정
-        signupPanel.add(registerButton, gbc);
-
-        // 뒤로가기 버튼
-        gbc.gridy++; // 회원가입 완료 버튼 아래로 이동
-        gbc.insets = new Insets(5, 10, 10, 10); // 위쪽 간격 줄임 (기본 10 → 5)
-        JButton backButton = new JButton("취소");
-        backButton.setPreferredSize(new Dimension(200, 40)); // 크기 설정
-        backButton.addActionListener(e -> showLoginPanel()); // 로그인 창으로 이동
-        signupPanel.add(backButton, gbc);
+        // 버튼
+        addComponent(signupPanel, gbc, 0, 7, 2, registerButton, 30);
+        JButton backButton = createSizedButton("취소");
+        backButton.addActionListener(e -> showLoginPanel());
+        addComponent(signupPanel, gbc, 0, 8, 2, backButton, 10);
     }
 
-    private JPanel createFieldPanel(String labelText, JComponent field) {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        panel.add(new JLabel(labelText));
-        panel.add(field);
-        return panel;
+    private GridBagConstraints createGbc() {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        return gbc;
+    }
+
+    private void addField(JPanel panel, GridBagConstraints gbc, String labelText, JComponent field, int yPosition) {
+        gbc.gridx = 0;
+        gbc.gridy = yPosition;
+        gbc.gridwidth = 1;
+        panel.add(new JLabel(labelText), gbc);
+        gbc.gridx = 1;
+        panel.add(field, gbc);
+    }
+
+    private void addComponent(JPanel panel, GridBagConstraints gbc, int x, int y, int width, JComponent component, int topPadding) {
+        gbc.gridx = x;
+        gbc.gridy = y;
+        gbc.gridwidth = width;
+        gbc.insets = new Insets(topPadding, 10, 10, 10);
+        panel.add(component, gbc);
+    }
+
+    private static JTextField createSizedTextField() {
+        JTextField textField = new JTextField(15);
+        textField.setPreferredSize(FIELD_DIMENSION);
+        return textField;
+    }
+
+    private static JPasswordField createSizedPasswordField() {
+        JPasswordField passwordField = new JPasswordField(15);
+        passwordField.setPreferredSize(FIELD_DIMENSION);
+        return passwordField;
+    }
+
+    private static JButton createSizedButton(String text) {
+        JButton button = new JButton(text);
+        button.setPreferredSize(FIELD_DIMENSION);
+        return button;
     }
 
     public void showLoginPanel() {
