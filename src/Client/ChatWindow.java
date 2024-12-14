@@ -16,6 +16,7 @@ public class ChatWindow extends JFrame {
     private JTextField inputField = new JTextField(15);
     private JButton sendButton = new JButton("전송");
     private StringBuilder htmlContent = new StringBuilder("<html><body>");
+    private JButton additionalOptionsButton = new JButton("+"); // 추가 옵션 버튼
 
     private boolean receivingHistory = false;
     private List<String> tempChatHistory = new ArrayList<>();
@@ -37,6 +38,13 @@ public class ChatWindow extends JFrame {
         JPanel inputPanel = new JPanel(new BorderLayout(5,5));
         inputPanel.add(inputField, BorderLayout.CENTER);
         inputPanel.add(sendButton, BorderLayout.EAST);
+        inputPanel.add(additionalOptionsButton, BorderLayout.WEST); // + 버튼 추가
+
+        // + 버튼 클릭 시 동작
+        additionalOptionsButton.addActionListener(e -> {
+            AdditionalOptionsWindow optionsWindow = new AdditionalOptionsWindow();
+            optionsWindow.setVisible(true);
+        });
 
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
