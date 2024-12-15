@@ -220,22 +220,44 @@ public class ClientUI extends JFrame {
             return;
         }
 
-        JList<String> friendsJList = new JList<>(friendsPanel.getFriendsListModel());
-        friendsJList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        // CheckBoxListModel 및 CheckBoxListRenderer 사용
+        CheckBoxListModel model = new CheckBoxListModel(friends);
+        JList<String> friendsJList = new JList<>(model);
+        friendsJList.setCellRenderer(new CheckBoxListRenderer());
+        friendsJList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION); // 다중 선택 모드 설정
+
+        // 마우스 클릭 이벤트로 체크박스 상태 변경
+        friendsJList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int index = friendsJList.locationToIndex(e.getPoint());
+                if (index >= 0) {
+                    // 클릭한 항목의 선택 상태를 반전시킴
+                    model.setChecked(index, !model.isChecked(index));
+                }
+            }
+        });
+
+        // 선택 창 표시
         JScrollPane scrollPane = new JScrollPane(friendsJList);
         scrollPane.setPreferredSize(new Dimension(200, 150));
         int result = JOptionPane.showConfirmDialog(frame, scrollPane,
                 "채팅방에 추가할 친구를 선택하세요", JOptionPane.OK_CANCEL_OPTION);
+
         if (result == JOptionPane.OK_OPTION) {
-            List<String> selectedFriends = friendsJList.getSelectedValuesList();
+            List<String> selectedFriends = model.getCheckedItems();
             if (selectedFriends.isEmpty()) {
                 JOptionPane.showMessageDialog(frame, "최소 하나의 친구를 선택하세요.");
                 return;
             }
+
+            // 선택된 친구를 기반으로 채팅방 생성 명령어 생성
             StringBuilder sb = new StringBuilder("/createchat " + chatRoomName);
             for (String friend : selectedFriends) {
                 sb.append(" ").append(friend);
             }
+
+            // 서버로 명령 전송
             if (clientHandler != null) clientHandler.sendMessage(sb.toString());
         }
     }
