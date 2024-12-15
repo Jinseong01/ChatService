@@ -36,10 +36,10 @@ public class UserHandler extends Thread {
             while ((msg = in.readLine()) != null) {
                 msg = msg.trim(); // 공백 제거
                 if (msg.isEmpty()) { // 빈 메시지 무시
-                    System.out.println("빈 메시지 수신: 처리하지 않음");
+                    System.out.println("[빈 메시지 수신] : 오류로 인해 처리하지 않음");
                     continue;
                 }
-                System.out.println("수신: " + msg);
+                System.out.println("[수신] : " + msg);
 
                 if (msg.startsWith("/signup")) {
                     handleSignup(msg);
@@ -71,7 +71,7 @@ public class UserHandler extends Thread {
                 } else if (msg.startsWith("/sendemoji")) { // 이모티콘 명령어 처리 추가
                     handleSendEmoji(msg);
                 } else {
-                    System.out.println("알 수 없는 명령어: " + msg);
+                    System.out.println("정의되지 않은 명령어: " + msg);
                     out.println("/error 알 수 없는 명령어입니다.");
                 }
             }
@@ -80,7 +80,7 @@ public class UserHandler extends Thread {
         } finally {
             if (loginID != null) {
                 ServerApp.onlineUsers.remove(loginID);
-                System.out.println(loginID + " 로그아웃");
+                System.out.println("[개발용] : " + loginID + " 로그아웃");
             }
             try {
                 socket.close();
@@ -112,7 +112,7 @@ public class UserHandler extends Thread {
             ServerApp.userCredentials.put(userLoginID, newUser);
             ServerApp.friendRequests.put(userLoginID, ConcurrentHashMap.newKeySet());
             out.println("/signup success");
-            System.out.println("회원가입 완료: " + userLoginID);
+            System.out.println("[개발용] : 회원가입 완료: " + userLoginID);
         }
     }
 
@@ -148,7 +148,8 @@ public class UserHandler extends Thread {
                     user.getInformation());
             out.println(successMsg);
 
-            System.out.println(userLoginID + " 로그인 성공");
+            System.out.println("[개발용] : " + userLoginID + " 로그인 성공");
+
             // 친구 목록 동기화
             handleGetFriends();
             // 메모 목록 동기화
@@ -164,6 +165,7 @@ public class UserHandler extends Thread {
             sb.append(" ").append(friend);
         }
         out.println(sb.toString());
+        System.out.println("[개발용] : 서버 " + user.getLoginID() + " 친구 목록 : " + friends);
     }
 
     // 친구 요청 처리
@@ -194,7 +196,7 @@ public class UserHandler extends Thread {
             ServerApp.onlineUsers.get(friendLoginID).sendMessage("/friendrequest " + loginID);
         }
         out.println("/addfriend success 친구 요청을 보냈습니다.");
-        System.out.println(loginID + "님이 " + friendLoginID + "님에게 친구 요청을 보냈습니다.");
+        System.out.println("[개발용] : " + loginID + "님이 " + friendLoginID + "님에게 친구 요청을 보냈습니다.");
     }
 
     // 친구 요청 수락 처리
@@ -219,7 +221,7 @@ public class UserHandler extends Thread {
             requesterUser.addFriend(loginID);
         }
         out.println("/acceptfriend success 친구가 되었습니다.");
-        System.out.println(loginID + "님과 " + requester + "님이 친구가 되었습니다.");
+        System.out.println("[개발용] : " + loginID + "님과 " + requester + "님이 친구가 되었습니다.");
         // 친구에게 알림 전송
         if (ServerApp.onlineUsers.containsKey(requester)) {
             ServerApp.onlineUsers.get(requester).sendMessage("/friendaccepted " + loginID);
@@ -228,6 +230,8 @@ public class UserHandler extends Thread {
         }
         // 현재 사용자의 최신 친구 목록을 동기화
         out.println("/friends " + String.join(" ", user.getFriends()));
+        System.out.println("[개발용] : 서버 "+ user.getLoginID() + "의 친구 목록 : " + user.getFriends());
+        System.out.println("[개발용] : 서버 "+ requesterUser.getLoginID() + "의 친구 목록 : " + requesterUser.getFriends());
     }
 
     // 친구 요청 거절 처리
@@ -247,7 +251,7 @@ public class UserHandler extends Thread {
         // 친구 요청 제거
         requests.remove(requester);
         out.println("/rejectfriend success 친구 요청을 거절했습니다.");
-        System.out.println(loginID + "님이 " + requester + "님의 친구 요청을 거절했습니다.");
+        System.out.println("[개발용] : " + loginID + "님이 " + requester + "님의 친구 요청을 거절했습니다.");
         // 친구 요청 보낸 사용자에게 알림
         if (ServerApp.onlineUsers.containsKey(requester)) {
             ServerApp.onlineUsers.get(requester).sendMessage("/friendrejected " + loginID);
@@ -351,12 +355,12 @@ public class UserHandler extends Thread {
     }
 
     private void handleSendEmoji(String msg) {
-        System.out.println("수신한 sendemoji 명령어: [" + msg + "]");
+        System.out.println("[개발용] : 수신한 sendemoji 명령어: [" + msg + "]");
 
         // 메시지를 공백으로 분리
         String[] tokens = msg.split(" ", 4);
         if (tokens.length != 4) {
-            System.out.println("sendemoji 명령어 파싱 실패: 잘못된 형식");
+            System.out.println("[개발용] : sendemoji 명령어 파싱 실패: 잘못된 형식");
             out.println("/sendemoji fail 잘못된 형식입니다.");
             return;
         }
@@ -365,13 +369,13 @@ public class UserHandler extends Thread {
         String sender = tokens[2];
         String emojiFileName = tokens[3];
 
-        System.out.println("파싱된 chatRoomId: " + chatRoomId);
-        System.out.println("파싱된 sender: " + sender);
-        System.out.println("파싱된 emojiFileName: " + emojiFileName);
+        System.out.println("[개발용] : 파싱된 chatRoomId: " + chatRoomId);
+        System.out.println("[개발용] : 파싱된 sender: " + sender);
+        System.out.println("[개발용] : 파싱된 emojiFileName: " + emojiFileName);
 
         // 채팅방 존재 여부 확인
         if (!ServerApp.chatRooms.containsKey(chatRoomId)) {
-            System.out.println("sendemoji 실패: 존재하지 않는 채팅방 [" + chatRoomId + "]");
+            System.out.println("[개발용] : sendemoji 실패: 존재하지 않는 채팅방 [" + chatRoomId + "]");
             out.println("/sendemoji fail 존재하지 않는 채팅방입니다.");
             return;
         }
@@ -381,7 +385,7 @@ public class UserHandler extends Thread {
         // 사용자가 채팅방 멤버인지 확인
         boolean isMember = chatRoom.getMembers().stream().anyMatch(u -> u.getLoginID().equals(sender));
         if (!isMember) {
-            System.out.println("sendemoji 실패: 사용자가 채팅방 멤버가 아님 [" + sender + "]");
+            System.out.println("[개발용] : sendemoji 실패: 사용자가 채팅방 멤버가 아님 [" + sender + "]");
             out.println("/sendemoji fail 채팅방 멤버가 아닙니다.");
             return;
         }
@@ -390,7 +394,7 @@ public class UserHandler extends Thread {
         String emojiFilePath = "src/Resources/emojis/" + emojiFileName;
         File emojiFile = new File(emojiFilePath);
         if (!emojiFile.exists()) {
-            System.out.println("sendemoji 실패: 이모티콘 파일이 존재하지 않음 [" + emojiFilePath + "]");
+            System.out.println("[개발용] : sendemoji 실패: 이모티콘 파일이 존재하지 않음 [" + emojiFilePath + "]");
             out.println("/sendemoji fail 이모티콘 파일이 존재하지 않습니다.");
             return;
         }
@@ -405,7 +409,7 @@ public class UserHandler extends Thread {
             }
         }
 
-        System.out.println("sendemoji 성공: " + formattedMessage);
+        System.out.println("[개발용] : sendemoji 성공: " + formattedMessage);
     }
 
     // 로그아웃 처리
@@ -488,6 +492,7 @@ public class UserHandler extends Thread {
             return;
         }
         List<String> memos = user.getMemos();
+        System.out.println("[개발용] : 서버 "+ loginID +" 메모 목록 : " + memos);
         out.println("/memosstart");
         for (int i = 0; i < memos.size(); i++) {
             out.println("/memo " + i + " " + memos.get(i).replace(" ", "_"));

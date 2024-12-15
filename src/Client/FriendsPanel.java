@@ -118,13 +118,6 @@ public class FriendsPanel extends JPanel {
     // 사용자 정보 업데이트 메서드
     public void updateUserInfo(User loginUser) {
         SwingUtilities.invokeLater(() -> {
-            System.out.println("Updating user info:");
-            System.out.println("ID: " + loginUser.getLoginID());
-            System.out.println("Name: " + loginUser.getUserName());
-            System.out.println("Birthday: " + loginUser.getBirthday());
-            System.out.println("Nickname: " + loginUser.getNickname());
-            System.out.println("Status Message: " + loginUser.getInformation());
-
             idValueLabel.setText(loginUser.getLoginID());
             nameValueLabel.setText(loginUser.getUserName());
             birthdayValueLabel.setText(loginUser.getBirthday());

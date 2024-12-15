@@ -47,11 +47,11 @@ public class ServerApp {
     }
 
     public static void main(String[] args) {
-        System.out.println("서버 시작 중...");
+        System.out.println("[서버 시작]");
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             while (true) {
                 Socket socket = serverSocket.accept();
-                System.out.println("클라이언트 연결: " + socket.getInetAddress());
+                System.out.println("[클라이언트 연결] : " + socket.getInetAddress());
                 new UserHandler(socket).start();
             }
         } catch (IOException e) {

@@ -92,4 +92,18 @@ public class User {
         memos.remove(index);
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "User {\n" +
+                "  loginID='" + loginID + "',\n" +
+                "  loginPW='" + loginPW + "',\n" +
+                "  userName='" + userName + "',\n" +
+                "  birthday='" + birthday + "',\n" +
+                "  nickname='" + nickname + "',\n" +
+                "  information='" + information + "',\n" +
+                "  friends=" + friends + ",\n" +
+                "  memos=" + memos + "\n" +
+                "}";
+    }
 }
