@@ -104,7 +104,7 @@ public class ClientHandler {
 
         try {
             // 서버에 이미지 전송 명령어
-            String command = "/sendimage " + chatRoomId + " " + loginID + " " + imageFile.getAbsolutePath();
+            String command = "/sendimage " + chatRoomId + " " + loginUser.getLoginID() + " " + imageFile.getAbsolutePath();
             out.println(command);
             System.out.println("전송 명령어: " + command);
         } catch (Exception e) {
