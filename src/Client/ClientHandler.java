@@ -111,6 +111,27 @@ public class ClientHandler {
         }
     }
 
+    public void sendImage(String chatRoomId, String imagePath) {
+        File imageFile = new File(imagePath);
+
+        if (!imageFile.exists()) {
+            System.err.println("전송하려는 이미지 파일이 존재하지 않습니다: " + imagePath);
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(ui.getFrame(), "이미지 파일이 존재하지 않습니다.", "오류", JOptionPane.ERROR_MESSAGE);
+            });
+            return;
+        }
+
+        try {
+            // 서버에 이미지 전송 명령어
+            String command = "/sendimage " + chatRoomId + " " + loginID + " " + imageFile.getAbsolutePath();
+            out.println(command);
+            System.out.println("전송 명령어: " + command);
+        } catch (Exception e) {
+            System.err.println("이미지 전송 중 오류 발생: " + e.getMessage());
+        }
+    }
+
     private class Listener implements Runnable {
         @Override
         public void run() {
@@ -158,6 +179,22 @@ public class ClientHandler {
                             });
                         } else {
                             System.out.println("수신된 /sendemoji 명령어의 형식이 잘못되었습니다: " + msg);
+                        }
+                    } else if (msg.startsWith("/sendimage")) {
+                        String[] tokens = msg.split(" ", 4);
+                        if (tokens.length == 4) {
+                            String chatRoomId = tokens[1];
+                            String senderLoginID = tokens[2];
+                            String imagePath = tokens[3];
+
+                            SwingUtilities.invokeLater(() -> {
+                                ChatWindow cw = chatWindows.get(chatRoomId); // 현재 채팅방 가져오기
+                                if (cw != null) {
+                                    cw.appendImage(senderLoginID, imagePath);
+                                }
+                            });
+                        } else {
+                            System.out.println("수신된 이미지 메시지의 형식이 잘못되었습니다: " + msg);
                         }
                     } else if (msg.startsWith("/login")) {
                         handleLoginResponse(msg);

@@ -45,7 +45,7 @@ public class AdditionalOptionsWindow extends JFrame {
         // 중앙: 미리보기/입력 영역
         JPanel previewPanel = new JPanel(new BorderLayout());
         previewPanel.setBorder(BorderFactory.createTitledBorder("미리보기"));
-        previewLabel = new JLabel("여기에 미리보기가 표시됩니다.", SwingConstants.CENTER);
+        previewLabel = new JLabel("", SwingConstants.CENTER);
         memoTextArea = new JTextArea(5, 20);
         memoTextArea.setVisible(false); // 초기에는 숨김
         previewPanel.add(previewLabel, BorderLayout.CENTER);
@@ -63,32 +63,65 @@ public class AdditionalOptionsWindow extends JFrame {
 
         // 프레임에 메인 패널 추가
         add(mainPanel);
+
+        // 이미지 버튼을 기본 동작으로 설정
+        imageButton.doClick();
     }
 
     private void setButtonActions(JButton imageButton, JButton emojiButton, JButton memoButton, JPanel previewPanel) {
         // 이미지 버튼 클릭 시
         imageButton.addActionListener(e -> {
             resetPreview(); // 기존 상태 초기화
-            previewLabel.setText("이미지 업로드 기능 선택됨");
+            previewLabel.setText("이미지 업로드");
+            previewLabel.setHorizontalAlignment(SwingConstants.CENTER);
             previewLabel.setVisible(true);
             memoTextArea.setVisible(false);
 
+            // 미리보기 라벨 클릭 이벤트 추가
+            previewLabel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    JFileChooser fileChooser = new JFileChooser();
+                    fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Image files", "jpg", "jpeg", "png", "gif"));
+                    int returnValue = fileChooser.showOpenDialog(AdditionalOptionsWindow.this);
+
+                    if (returnValue == JFileChooser.APPROVE_OPTION) {
+                        File selectedFile = fileChooser.getSelectedFile();
+
+                        // 선택한 이미지 미리보기 표시
+                        previewLabel.setIcon(new ImageIcon(new ImageIcon(selectedFile.getAbsolutePath()).getImage().getScaledInstance(128, 128, Image.SCALE_SMOOTH)));
+                        previewLabel.setHorizontalTextPosition(SwingConstants.CENTER);
+                        previewLabel.setVerticalTextPosition(SwingConstants.BOTTOM);
+                        previewLabel.revalidate();
+                        previewLabel.repaint();
+
+                        // 선택한 이미지 파일 경로 저장
+                        selectedEmojiLabel = new JLabel(); // 새로 라벨 생성
+                        selectedEmojiLabel.setName(selectedFile.getAbsolutePath()); // 절대 경로 설정
+                        System.out.println("선택된 이미지 경로: " + selectedFile.getAbsolutePath()); // 디버깅 출력
+                    }
+                }
+            });
+
+            // 전송 버튼 클릭 시 이벤트
             replaceButtonAction(selectButton, sendEvent -> {
                 if (selectedEmojiLabel != null && selectedEmojiLabel.getName() != null) {
-                    File emojiFile = new File(selectedEmojiLabel.getName());
+                    File imageFile = new File(selectedEmojiLabel.getName());
 
-                    if (!emojiFile.exists()) {
-                        JOptionPane.showMessageDialog(this, "선택한 이모티콘 파일이 없습니다.", "오류", JOptionPane.WARNING_MESSAGE);
+                    System.out.println("전송할 이미지 파일 경로: " + imageFile.getAbsolutePath()); // 디버깅 출력
+
+                    if (!imageFile.exists()) {
+                        JOptionPane.showMessageDialog(this, "선택한 파일이 없습니다.", "오류", JOptionPane.WARNING_MESSAGE);
                         return;
                     }
 
-                    // 서버로 전송
-                    clientHandler.sendEmoji(chatRoomId, selectedEmojiLabel.getName());
+                    // 서버로 이미지 경로 전송
+                    clientHandler.sendImage(chatRoomId, imageFile.getAbsolutePath());
 
-                    JOptionPane.showMessageDialog(this, "이모티콘이 전송되었습니다.", "성공", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "이미지가 전송되었습니다.", "성공", JOptionPane.INFORMATION_MESSAGE);
                     dispose();
                 } else {
-                    JOptionPane.showMessageDialog(this, "이모티콘을 선택하세요.", "오류", JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "이미지를 선택하세요.", "오류", JOptionPane.WARNING_MESSAGE);
                 }
             });
         });

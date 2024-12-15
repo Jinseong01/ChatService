@@ -137,6 +137,27 @@ public class ChatWindow extends JFrame {
         appendToChat(message, alignment, senderStyle);
     }
 
+    protected void appendImage(String senderLoginID, String imagePath) {
+        File imageFile = new File(imagePath);
+
+        if (!imageFile.exists()) {
+            System.err.println("이미지 파일이 존재하지 않습니다: " + imagePath);
+            return;
+        }
+
+        try {
+            String imgTag = "<img src='file://" + imageFile.getAbsolutePath().replace("\\", "/") + "' width='128' height='128'>";
+            String alignment = senderLoginID.equals(loginID) ? "right" : "left";
+            String senderStyle = senderLoginID.equals(loginID) ? "나" : senderLoginID;
+
+            appendToChat(imgTag, alignment, senderStyle);
+
+            System.out.println("이미지 추가 성공: " + imageFile.getAbsolutePath());
+        } catch (Exception e) {
+            System.err.println("이미지 추가 중 오류 발생: " + e.getMessage());
+        }
+    }
+
     protected void appendEmoji(String senderLoginID, String emojiFileName) {
         System.out.println("appendEmoji 호출됨: senderLoginID=" + senderLoginID + ", emojiFileName=" + emojiFileName);
         String emojiPath = emojiFileName;

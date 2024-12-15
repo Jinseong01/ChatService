@@ -68,8 +68,10 @@ public class UserHandler extends Thread {
                     handleDeleteMemo(msg);
                 } else if (msg.startsWith("/getmemos")) {
                     handleGetMemos(msg);
-                } else if (msg.startsWith("/sendemoji")) { // 이모티콘 명령어 처리 추가
+                } else if (msg.startsWith("/sendemoji")) {
                     handleSendEmoji(msg);
+                } else if (msg.startsWith("/sendimage")) {
+                    handleSendImage(msg);
                 } else {
                     System.out.println("알 수 없는 명령어: " + msg);
                     out.println("/error 알 수 없는 명령어입니다.");
@@ -338,6 +340,55 @@ public class UserHandler extends Thread {
                 ServerApp.onlineUsers.get(member.getLoginID()).sendMessage(formattedMessage);
             }
         }
+    }
+
+    private void handleSendImage(String msg) {
+        System.out.println("수신한 sendimage 명령어: [" + msg + "]");
+
+        // 명령어 파싱
+        String[] tokens = msg.split(" ", 4);
+        if (tokens.length != 4) {
+            System.out.println("sendimage 명령어 파싱 실패: 잘못된 형식");
+            out.println("/sendimage fail 잘못된 형식입니다.");
+            return;
+        }
+
+        String chatRoomId = tokens[1];
+        String sender = tokens[2];
+        String imagePath = tokens[3];
+
+        System.out.println("파싱된 chatRoomId: " + chatRoomId);
+        System.out.println("파싱된 sender: " + sender);
+        System.out.println("파싱된 imagePath: " + imagePath);
+
+        // 채팅방 존재 여부 확인
+        if (!ServerApp.chatRooms.containsKey(chatRoomId)) {
+            System.out.println("sendimage 실패: 존재하지 않는 채팅방 [" + chatRoomId + "]");
+            out.println("/sendimage fail 존재하지 않는 채팅방입니다.");
+            return;
+        }
+
+        ChatRoom chatRoom = ServerApp.chatRooms.get(chatRoomId);
+
+        // 사용자가 채팅방 멤버인지 확인
+        boolean isMember = chatRoom.getMembers().stream().anyMatch(u -> u.getLoginID().equals(sender));
+        if (!isMember) {
+            System.out.println("sendimage 실패: 사용자가 채팅방 멤버가 아님 [" + sender + "]");
+            out.println("/sendimage fail 채팅방 멤버가 아닙니다.");
+            return;
+        }
+
+        // 이미지 메시지 생성 및 브로드캐스트
+        String formattedMessage = "/sendimage " + chatRoomId + " " + sender + " " + imagePath;
+        chatRoom.addMessage(formattedMessage);
+
+        for (User member : chatRoom.getMembers()) {
+            if (ServerApp.onlineUsers.containsKey(member.getLoginID())) {
+                ServerApp.onlineUsers.get(member.getLoginID()).sendMessage(formattedMessage);
+            }
+        }
+
+        System.out.println("sendimage 성공: " + formattedMessage);
     }
 
     private void handleSendEmoji(String msg) {
