@@ -34,7 +34,13 @@ public class UserHandler extends Thread {
         try {
             String msg;
             while ((msg = in.readLine()) != null) {
+                msg = msg.trim(); // 공백 제거
+                if (msg.isEmpty()) { // 빈 메시지 무시
+                    System.out.println("빈 메시지 수신: 처리하지 않음");
+                    continue;
+                }
                 System.out.println("수신: " + msg);
+
                 if (msg.startsWith("/signup")) {
                     handleSignup(msg);
                 } else if (msg.startsWith("/login")) {
@@ -62,7 +68,10 @@ public class UserHandler extends Thread {
                     handleDeleteMemo(msg);
                 } else if (msg.startsWith("/getmemos")) {
                     handleGetMemos(msg);
+                } else if (msg.startsWith("/sendemoji")) { // 이모티콘 명령어 처리 추가
+                    handleSendEmoji(msg);
                 } else {
+                    System.out.println("알 수 없는 명령어: " + msg);
                     out.println("/error 알 수 없는 명령어입니다.");
                 }
             }
@@ -329,6 +338,64 @@ public class UserHandler extends Thread {
                 ServerApp.onlineUsers.get(member.getLoginID()).sendMessage(formattedMessage);
             }
         }
+    }
+
+    private void handleSendEmoji(String msg) {
+        System.out.println("수신한 sendemoji 명령어: [" + msg + "]");
+
+        // 메시지를 공백으로 분리
+        String[] tokens = msg.split(" ", 4);
+        if (tokens.length != 4) {
+            System.out.println("sendemoji 명령어 파싱 실패: 잘못된 형식");
+            out.println("/sendemoji fail 잘못된 형식입니다.");
+            return;
+        }
+
+        String chatRoomId = tokens[1];
+        String sender = tokens[2];
+        String emojiFileName = tokens[3];
+
+        System.out.println("파싱된 chatRoomId: " + chatRoomId);
+        System.out.println("파싱된 sender: " + sender);
+        System.out.println("파싱된 emojiFileName: " + emojiFileName);
+
+        // 채팅방 존재 여부 확인
+        if (!ServerApp.chatRooms.containsKey(chatRoomId)) {
+            System.out.println("sendemoji 실패: 존재하지 않는 채팅방 [" + chatRoomId + "]");
+            out.println("/sendemoji fail 존재하지 않는 채팅방입니다.");
+            return;
+        }
+
+        ChatRoom chatRoom = ServerApp.chatRooms.get(chatRoomId);
+
+        // 사용자가 채팅방 멤버인지 확인
+        boolean isMember = chatRoom.getMembers().stream().anyMatch(u -> u.getLoginID().equals(sender));
+        if (!isMember) {
+            System.out.println("sendemoji 실패: 사용자가 채팅방 멤버가 아님 [" + sender + "]");
+            out.println("/sendemoji fail 채팅방 멤버가 아닙니다.");
+            return;
+        }
+
+        // 이모티콘 파일 경로 설정
+        String emojiFilePath = "src/Resources/emojis/" + emojiFileName;
+        File emojiFile = new File(emojiFilePath);
+        if (!emojiFile.exists()) {
+            System.out.println("sendemoji 실패: 이모티콘 파일이 존재하지 않음 [" + emojiFilePath + "]");
+            out.println("/sendemoji fail 이모티콘 파일이 존재하지 않습니다.");
+            return;
+        }
+
+        // 이모티콘 메시지 생성 및 브로드캐스트
+        String formattedMessage = "/sendemoji " + chatRoomId + " " + sender + " " + emojiFilePath;
+        chatRoom.addMessage(formattedMessage);
+
+        for (User member : chatRoom.getMembers()) {
+            if (ServerApp.onlineUsers.containsKey(member.getLoginID())) {
+                ServerApp.onlineUsers.get(member.getLoginID()).sendMessage(formattedMessage);
+            }
+        }
+
+        System.out.println("sendemoji 성공: " + formattedMessage);
     }
 
     // 로그아웃 처리

@@ -14,6 +14,20 @@ public class ClientHandler {
     private PrintWriter out;
     private String loginID = null;
 
+    private List<ClientHandler> clients; // 서버에 연결된 모든 클라이언트
+
+    public ClientHandler(Socket socket, List<ClientHandler> clients) {
+        this.socket = socket;
+        this.clients = clients;
+
+        try {
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new PrintWriter(socket.getOutputStream(), true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     // 채팅방ID -> ChatWindow 맵
     private Map<String, ChatWindow> chatWindows = new HashMap<>();
 
@@ -56,6 +70,47 @@ public class ClientHandler {
         return chatWindows.get(chatRoomId);
     }
 
+    // 이미지 업로드 요청
+    public void uploadImage(File imageFile) {
+        if (imageFile != null && imageFile.exists()) {
+            sendMessage("/uploadimage " + imageFile.getAbsolutePath());
+        } else {
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(ui.getFrame(), "이미지 파일이 존재하지 않습니다.", "오류", JOptionPane.ERROR_MESSAGE);
+            });
+        }
+    }
+
+    // 이모티콘 전송 요청
+    public void sendEmoji(String chatRoomId, String emojiFileName) {
+        if (chatRoomId == null || emojiFileName == null || emojiFileName.isEmpty()) {
+            System.out.println("sendEmoji 실패: chatRoomId 또는 emojiFileName이 null/비어 있음");
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(ui.getFrame(), "유효하지 않은 이모티콘입니다.", "오류", JOptionPane.ERROR_MESSAGE);
+            });
+            return;
+        }
+
+        // 서버로 전송
+        String command = "/sendemoji " + chatRoomId + " " + loginID + " " + emojiFileName;
+        System.out.println("전송 명령어: " + command); // 디버깅 출력
+
+        // 정확히 한 줄만 전송
+        out.print(command + "\n");
+        out.flush(); // 스트림 강제 플러시
+    }
+
+    // 메모 저장 요청
+    public void saveMemo(String memoContent) {
+        if (memoContent != null && !memoContent.trim().isEmpty()) {
+            sendMessage("/addmemo " + memoContent.replace(" ", "_"));
+        } else {
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(ui.getFrame(), "메모 내용이 비어 있습니다.", "오류", JOptionPane.ERROR_MESSAGE);
+            });
+        }
+    }
+
     private class Listener implements Runnable {
         @Override
         public void run() {
@@ -85,6 +140,24 @@ public class ClientHandler {
                             if (cw != null) {
                                 cw.handleChatMessage(msg);
                             }
+                        } else {
+                            System.out.println("수신된 /chat 명령어의 형식이 잘못되었습니다: " + msg);
+                        }
+                    } else if (msg.startsWith("/sendemoji ")) {
+                        String[] tokens = msg.split(" ", 4);
+                        if (tokens.length == 4) {
+                            String chatRoomId = tokens[1];
+                            String senderLoginID = tokens[2];
+                            String emojiFilePath = tokens[3];
+
+                            SwingUtilities.invokeLater(() -> {
+                                ChatWindow cw = chatWindows.get(chatRoomId);
+                                if (cw != null) {
+                                    cw.appendEmoji(senderLoginID, emojiFilePath);
+                                }
+                            });
+                        } else {
+                            System.out.println("수신된 /sendemoji 명령어의 형식이 잘못되었습니다: " + msg);
                         }
                     } else if (msg.startsWith("/login")) {
                         handleLoginResponse(msg);
@@ -108,7 +181,7 @@ public class ClientHandler {
                         handleLogoutResponse(msg);
                     } else if (msg.startsWith("/memosstart")) {
                         handleMemosStart(msg);
-                    } else if (msg.startsWith("/memo ")) {
+                    } else if (msg.startsWith("/memo")) {
                         handleMemo(msg);
                     } else if (msg.startsWith("/memosend")) {
                         handleMemosEnd(msg);
@@ -125,6 +198,26 @@ public class ClientHandler {
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(ui.getFrame(), "서버 연결이 끊어졌습니다.");
                 });
+            }
+        }
+
+        private void broadcastMessage(String message) {
+            for (ClientHandler client : clients) {
+                client.out.println(message);
+            }
+        }
+
+        private void handleEmojiMessage(String msg) {
+            String[] tokens = msg.split(" ", 4); // chatRoomId 추가
+            if (tokens.length == 4) {
+                String chatRoomId = tokens[1];  // 채팅방 ID
+                String senderLoginID = tokens[2];  // 보낸 사람의 ID
+                String emojiFileName = tokens[3]; // 이모티콘 파일 이름
+
+                ChatWindow cw = chatWindows.get(chatRoomId); // 특정 채팅창 가져오기
+                if (cw != null) {
+                    SwingUtilities.invokeLater(() -> cw.appendEmoji(senderLoginID, emojiFileName));
+                }
             }
         }
 

@@ -2,18 +2,29 @@ package Client;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AdditionalOptionsWindow extends JFrame {
     private JTextArea memoTextArea; // 메모 입력창
     private JLabel previewLabel; // 기본 미리보기 라벨
     private JButton selectButton; // 하단 버튼 (공용)
     private ClientHandler clientHandler; // ClientHandler 참조
+    private String chatRoomId; // 채팅방 ID
 
-    public AdditionalOptionsWindow(ClientHandler handler) {
+    // 이모티콘 디렉토리 설정
+    private static final String EMOJI_DIRECTORY = "src/Resources/emojis";
+    private JLabel selectedEmojiLabel; // 선택된 이모티콘
+
+    public AdditionalOptionsWindow(ClientHandler handler, String chatRoomId) {
         this.clientHandler = handler; // ClientHandler 연결
+        this.chatRoomId = chatRoomId;
 
         setTitle("추가 옵션");
-        setSize(300, 400);
+        setSize(400, 500);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null); // 창을 화면 중앙에 위치
 
@@ -57,59 +68,138 @@ public class AdditionalOptionsWindow extends JFrame {
     private void setButtonActions(JButton imageButton, JButton emojiButton, JButton memoButton, JPanel previewPanel) {
         // 이미지 버튼 클릭 시
         imageButton.addActionListener(e -> {
+            resetPreview(); // 기존 상태 초기화
             previewLabel.setText("이미지 업로드 기능 선택됨");
-            memoTextArea.setVisible(false); // 메모 입력창 숨기기
             previewLabel.setVisible(true);
+            memoTextArea.setVisible(false);
 
-            selectButton.setText("업로드");
-            selectButton.addActionListener(uploadEvent -> {
-                JOptionPane.showMessageDialog(this, "이미지 업로드 기능은 아직 구현되지 않았습니다.");
+            replaceButtonAction(selectButton, sendEvent -> {
+                if (selectedEmojiLabel != null && selectedEmojiLabel.getName() != null) {
+                    File emojiFile = new File(selectedEmojiLabel.getName());
+
+                    if (!emojiFile.exists()) {
+                        JOptionPane.showMessageDialog(this, "선택한 이모티콘 파일이 없습니다.", "오류", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+
+                    // 서버로 전송
+                    clientHandler.sendEmoji(chatRoomId, selectedEmojiLabel.getName());
+
+                    JOptionPane.showMessageDialog(this, "이모티콘이 전송되었습니다.", "성공", JOptionPane.INFORMATION_MESSAGE);
+                    dispose();
+                } else {
+                    JOptionPane.showMessageDialog(this, "이모티콘을 선택하세요.", "오류", JOptionPane.WARNING_MESSAGE);
+                }
             });
         });
 
         // 이모티콘 버튼 클릭 시
         emojiButton.addActionListener(e -> {
-            previewLabel.setText("이모티콘 선택 기능 선택됨");
-            memoTextArea.setVisible(false); // 메모 입력창 숨기기
-            previewLabel.setVisible(true);
+            resetPreview(); // 기존 상태 초기화
+            previewLabel.setVisible(false);
+            memoTextArea.setVisible(false);
 
-            selectButton.setText("선택");
-            selectButton.addActionListener(selectEvent -> {
-                JOptionPane.showMessageDialog(this, "이모티콘 선택 기능은 아직 구현되지 않았습니다.");
-            });
+            // 이모티콘 선택 패널
+            JPanel emojiPanel = new JPanel(new GridLayout(2, 2, 10, 10));
+            List<JLabel> emojiLabels = new ArrayList<>();
+            File emojiDir = new File(EMOJI_DIRECTORY);
+
+            if (emojiDir.exists() && emojiDir.isDirectory()) {
+                File[] emojiFiles = emojiDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".png"));
+
+                if (emojiFiles != null && emojiFiles.length > 0) {
+                    for (File emojiFile : emojiFiles) {
+                        ImageIcon emojiIcon = new ImageIcon(emojiFile.getAbsolutePath());
+                        Image scaledImage = emojiIcon.getImage().getScaledInstance(64, 64, Image.SCALE_SMOOTH);
+                        JLabel emojiLabel = new JLabel(new ImageIcon(scaledImage));
+                        emojiLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+                        emojiPanel.add(emojiLabel);
+                        emojiLabels.add(emojiLabel);
+
+                        emojiLabel.addMouseListener(new MouseAdapter() {
+                            @Override
+                            public void mouseClicked(MouseEvent e) {
+                                // 모든 라벨의 강조 표시 초기화
+                                for (JLabel label : emojiLabels) {
+                                    label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+                                }
+                                // 선택된 라벨 강조 표시
+                                emojiLabel.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+                                selectedEmojiLabel = emojiLabel;
+
+                                // 선택된 이모티콘 파일의 경로를 저장
+                                selectedEmojiLabel.setName(emojiFile.getAbsolutePath()); // 절대 경로 설정
+                                System.out.println("선택된 이모티콘 경로: " + emojiFile.getAbsolutePath()); // 디버깅 출력
+                            }
+                        });
+                    }
+
+                    previewPanel.removeAll();
+                    previewPanel.add(new JScrollPane(emojiPanel), BorderLayout.CENTER);
+                    previewPanel.revalidate();
+                    previewPanel.repaint();
+
+                    selectButton.setText("전송");
+                    replaceButtonAction(selectButton, sendEvent -> {
+                        if (selectedEmojiLabel != null && selectedEmojiLabel.getName() != null) {
+                            File emojiFile = new File(selectedEmojiLabel.getName());
+
+                            System.out.println("이모티콘 파일 경로: " + emojiFile.getAbsolutePath()); // 디버깅 출력
+
+                            if (!emojiFile.exists()) {
+                                JOptionPane.showMessageDialog(this, "선택한 이모티콘 파일이 없습니다.", "오류", JOptionPane.WARNING_MESSAGE);
+                                return;
+                            }
+
+                            // 서버로 전송
+                            clientHandler.sendEmoji(chatRoomId, emojiFile.getName());
+
+                            JOptionPane.showMessageDialog(this, "이모티콘이 전송되었습니다.", "성공", JOptionPane.INFORMATION_MESSAGE);
+                            dispose();
+                        } else {
+                            JOptionPane.showMessageDialog(this, "이모티콘을 선택하세요.", "오류", JOptionPane.WARNING_MESSAGE);
+                        }
+                    });
+                } else {
+                    JOptionPane.showMessageDialog(this, "이모티콘 파일이 없습니다.", "오류", JOptionPane.WARNING_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "이모티콘 디렉토리가 없습니다.", "오류", JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         // 메모 버튼 클릭 시
         memoButton.addActionListener(e -> {
+            resetPreview(); // 기존 상태 초기화
             previewPanel.remove(previewLabel); // 기존 미리보기 라벨 제거
             previewPanel.add(memoTextArea, BorderLayout.CENTER); // 메모 입력창 추가
             memoTextArea.setVisible(true);
-            previewLabel.setVisible(false);
 
             selectButton.setText("저장");
-            selectButton.addActionListener(saveEvent -> {
+            replaceButtonAction(selectButton, saveEvent -> {
                 String memoContent = memoTextArea.getText().trim();
                 if (memoContent.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "메모 내용을 입력하세요.", "오류", JOptionPane.WARNING_MESSAGE);
                 } else {
-                    if (clientHandler != null) {
-                        clientHandler.sendMessage("/addmemo " + memoContent.replace(" ", "_"));
-                        JOptionPane.showMessageDialog(this, "메모가 저장되었습니다.", "성공", JOptionPane.INFORMATION_MESSAGE);
-                    } else {
-                        JOptionPane.showMessageDialog(this, "서버 연결이 없습니다.", "오류", JOptionPane.ERROR_MESSAGE);
-                    }
-                    // 입력 필드 초기화 및 창 닫기
-                    memoTextArea.setText("");
-                    dispose();
+                    clientHandler.saveMemo(memoContent); // ClientHandler에 메모 저장 요청
+                    JOptionPane.showMessageDialog(this, "메모가 저장되었습니다.", "성공", JOptionPane.INFORMATION_MESSAGE);
+                    memoTextArea.setText(""); // 입력 필드 초기화
                 }
             });
         });
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            // 테스트용 (ClientHandler 없이)
-            new AdditionalOptionsWindow(null).setVisible(true);
-        });
+    private void resetPreview() {
+        previewLabel.setText("");
+        previewLabel.setIcon(null);
+        previewLabel.setVisible(false);
+        memoTextArea.setVisible(false);
+    }
+
+    private void replaceButtonAction(JButton button, java.awt.event.ActionListener newAction) {
+        for (java.awt.event.ActionListener al : button.getActionListeners()) {
+            button.removeActionListener(al);
+        }
+        button.addActionListener(newAction);
     }
 }
