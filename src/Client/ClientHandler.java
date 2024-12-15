@@ -1,5 +1,7 @@
 package Client;
 
+import Model.User;
+
 import javax.swing.*;
 import java.io.*;
 import java.net.*;
@@ -12,21 +14,7 @@ public class ClientHandler {
     private Socket socket;
     private BufferedReader in;
     private PrintWriter out;
-    private String loginID = null;
-
-    private List<ClientHandler> clients; // 서버에 연결된 모든 클라이언트
-
-    public ClientHandler(Socket socket, List<ClientHandler> clients) {
-        this.socket = socket;
-        this.clients = clients;
-
-        try {
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            out = new PrintWriter(socket.getOutputStream(), true);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    private User loginUser = null;
 
     // 채팅방ID -> ChatWindow 맵
     private Map<String, ChatWindow> chatWindows = new HashMap<>();
@@ -54,14 +42,6 @@ public class ClientHandler {
         if (out != null) out.println(message);
     }
 
-    public String getLoginID() {
-        return loginID;
-    }
-
-    public void setLoginID(String loginID) {
-        this.loginID = loginID;
-    }
-
     public void addChatWindow(String chatRoomId, ChatWindow cw) {
         chatWindows.put(chatRoomId, cw);
     }
@@ -84,7 +64,7 @@ public class ClientHandler {
     // 이모티콘 전송 요청
     public void sendEmoji(String chatRoomId, String emojiFileName) {
         if (chatRoomId == null || emojiFileName == null || emojiFileName.isEmpty()) {
-            System.out.println("sendEmoji 실패: chatRoomId 또는 emojiFileName이 null/비어 있음");
+            System.out.println("[개발용] : sendEmoji 실패: chatRoomId 또는 emojiFileName이 null/비어 있음");
             SwingUtilities.invokeLater(() -> {
                 JOptionPane.showMessageDialog(ui.getFrame(), "유효하지 않은 이모티콘입니다.", "오류", JOptionPane.ERROR_MESSAGE);
             });
@@ -92,8 +72,8 @@ public class ClientHandler {
         }
 
         // 서버로 전송
-        String command = "/sendemoji " + chatRoomId + " " + loginID + " " + emojiFileName;
-        System.out.println("전송 명령어: " + command); // 디버깅 출력
+        String command = "/sendemoji " + chatRoomId + " " + loginUser.getLoginID() + " " + emojiFileName;
+        System.out.println("[개발용] : 전송 명령어: " + command); // 디버깅 출력
 
         // 정확히 한 줄만 전송
         out.print(command + "\n");
@@ -138,7 +118,7 @@ public class ClientHandler {
             try {
                 String msg;
                 while ((msg = in.readLine()) != null) {
-                    System.out.println("서버 메시지: " + msg);
+                    System.out.println("[서버 메시지] : " + msg);
                     if (msg.startsWith("/chathistorystart ")) {
                         String[] tokens = msg.split(" ", 2);
                         String chatRoomId = tokens[1];
@@ -218,10 +198,10 @@ public class ClientHandler {
                         handleLogoutResponse(msg);
                     } else if (msg.startsWith("/memosstart")) {
                         handleMemosStart(msg);
-                    } else if (msg.startsWith("/memo")) {
-                        handleMemo(msg);
                     } else if (msg.startsWith("/memosend")) {
                         handleMemosEnd(msg);
+                    } else if (msg.startsWith("/memo")) {
+                        handleMemo(msg);
                     } else if (msg.startsWith("/addmemo")) {
                         handleAddMemoResponse(msg);
                     } else if (msg.startsWith("/editmemo")) {
@@ -235,12 +215,6 @@ public class ClientHandler {
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(ui.getFrame(), "서버 연결이 끊어졌습니다.");
                 });
-            }
-        }
-
-        private void broadcastMessage(String message) {
-            for (ClientHandler client : clients) {
-                client.out.println(message);
             }
         }
 
@@ -259,15 +233,27 @@ public class ClientHandler {
         }
 
         private void handleLoginResponse(String msg) {
-            String[] tokens = msg.split(" ", 3);
-            if (tokens.length < 2) return;
+            String[] tokens = msg.split(" ", 8);
+
+            if (tokens.length < 8) return;
+
             if (tokens[1].equals("success")) {
-                setLoginID(ui.getLoginIDFromField());
+                String loginID = tokens[2];
+                String loginPW = tokens[3];
+                String userName = tokens[4];
+                String birthday = tokens[5];
+                String nickname = tokens[6];
+                String information = tokens[7];
+                // loginUser 객체 생성
+                loginUser = new User(loginID, loginPW, userName, birthday, nickname, information);
+
+                System.out.println("[개발용] : " + loginUser);
+
                 SwingUtilities.invokeLater(() -> {
-                    ui.switchToChatPanel();
+                    ui.handleLoginSuccess(loginUser);
                 });
             } else {
-                String errorMsg = tokens.length >= 3 ? tokens[2] : "로그인 실패";
+                String errorMsg = tokens.length >= 8 ? tokens[2] : "로그인 실패";
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(ui.getFrame(), "로그인 실패: " + errorMsg);
                 });
@@ -298,10 +284,17 @@ public class ClientHandler {
         }
 
         private void handleFriendsList(String msg) {
+            // 형식: /friends friend1 friend2 friend3 ...
             String[] tokens = msg.split(" ");
-            SwingUtilities.invokeLater(() -> {
-                ui.updateFriendsList(Arrays.asList(tokens).subList(1, tokens.length));
-            });
+            if (loginUser != null) {
+                for (int i = 1; i < tokens.length; i++) {
+                    loginUser.addFriend(tokens[i]);
+                }
+                SwingUtilities.invokeLater(() -> {
+                    ui.updateFriendsList(new ArrayList<>(loginUser.getFriends()));
+                });
+            }
+            System.out.println("[개발용] 클라이언트 " + loginUser.getLoginID() + "의 친구 목록 : " + loginUser.getFriends());
         }
 
         private void handleFriendRequest(String msg) {
@@ -314,12 +307,17 @@ public class ClientHandler {
         }
 
         private void handleFriendAccepted(String msg) {
+            // 형식: /friendaccepted accepterLoginID
             String[] tokens = msg.split(" ", 2);
             if (tokens.length != 2) return;
             String accepterLoginID = tokens[1];
-            SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(ui.getFrame(), accepterLoginID + "님이 친구 요청을 수락했습니다.");
-            });
+            if (loginUser != null) {
+                loginUser.addFriend(accepterLoginID);
+                SwingUtilities.invokeLater(() -> {
+                    ui.updateFriendsList(new ArrayList<>(loginUser.getFriends()));
+                    JOptionPane.showMessageDialog(ui.getFrame(), accepterLoginID + "님이 친구 요청을 수락했습니다.");
+                });
+            }
         }
 
         private void handleFriendRejected(String msg) {
@@ -368,28 +366,35 @@ public class ClientHandler {
         }
 
         private void handleMemosStart(String msg) {
+            System.out.println("[개발용] : 사용자 메모 초기화");
+            loginUser.getMemos().clear();
             SwingUtilities.invokeLater(() -> {
                 ui.clearMemos();
             });
         }
 
         private void handleMemo(String msg) {
+            // 형식: /memo index memoContent
             String[] tokens = msg.split(" ", 3);
             if (tokens.length != 3) return;
             String index = tokens[1];
             String memoContent = tokens[2].replace("_", " ");
-            SwingUtilities.invokeLater(() -> {
-                ui.addMemo("[" + index + "] " + memoContent);
-            });
+            if (loginUser != null) {
+                loginUser.addMemo(memoContent);
+                SwingUtilities.invokeLater(() -> {
+                    ui.addMemo("[" + index + "] " + memoContent);
+                });
+            }
         }
 
         private void handleMemosEnd(String msg) {
             // 메모 수신 종료 시 특별 처리 필요 시 여기에
+            System.out.println("[개발용] : " + loginUser.getLoginID() + "의 메모 목록 : " + loginUser.getMemos());
         }
 
         private void handleAddMemoResponse(String msg) {
             if (msg.contains("success")) {
-                sendMessage("/getmemos " + loginID);
+                sendMessage("/getmemos " + loginUser.getLoginID());
             } else {
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(ui.getFrame(), "메모 추가 실패.");
@@ -399,7 +404,7 @@ public class ClientHandler {
 
         private void handleEditMemoResponse(String msg) {
             if (msg.contains("success")) {
-                sendMessage("/getmemos " + loginID);
+                sendMessage("/getmemos " + loginUser.getLoginID());
             } else {
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(ui.getFrame(), "메모 수정 실패.");
@@ -409,7 +414,7 @@ public class ClientHandler {
 
         private void handleDeleteMemoResponse(String msg) {
             if (msg.contains("success")) {
-                sendMessage("/getmemos " + loginID);
+                sendMessage("/getmemos " + loginUser.getLoginID());
             } else {
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(ui.getFrame(), "메모 삭제 실패.");

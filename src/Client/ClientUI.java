@@ -1,5 +1,7 @@
 package Client;
 
+import Model.User;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -21,6 +23,9 @@ public class ClientUI extends JFrame {
 
     private JTabbedPane leftTabbedPane;
 
+    // 로그인한 사용자 정보
+    private User loginUser = null;
+
     public ClientUI() {
         initializeUI();
     }
@@ -35,10 +40,6 @@ public class ClientUI extends JFrame {
 
     public void showFrame() {
         frame.setVisible(true);
-    }
-
-    public String getLoginIDFromField() {
-        return authPanel.getLoginUserField().getText().trim();
     }
 
     private void initializeUI() {
@@ -148,8 +149,8 @@ public class ClientUI extends JFrame {
         menuPanel.setVisible(false); // 메뉴 숨기기
     }
 
-    public void switchToChatPanel() {
-        cardLayout.show(mainPanel, "chat");
+    public void switchToFriendsPanel() {
+        cardLayout.show(mainPanel, "friends");
         menuPanel.setVisible(true); // 메뉴 표시
     }
 
@@ -360,8 +361,21 @@ public class ClientUI extends JFrame {
         }
         String chatRoomId = selectedChatRoom.substring(idStart + 4, idEnd);
 
-        ChatWindow chatWindow = new ChatWindow(getLoginIDFromField(), chatRoomId, clientHandler);
+        if (loginUser == null) {
+            JOptionPane.showMessageDialog(frame, "로그인 정보가 없습니다.");
+            return;
+        }
+
+        ChatWindow chatWindow = new ChatWindow(loginUser.getLoginID(), chatRoomId, clientHandler);
         clientHandler.addChatWindow(chatRoomId, chatWindow);
         chatWindow.setVisible(true);
+    }
+
+    // 로그인 성공 시 호출되는 메서드
+    public void handleLoginSuccess(User loginUser) {
+        this.loginUser = loginUser; // 로그인한 사용자 정보 저장
+        // FriendsPanel의 사용자 정보 업데이트
+        friendsPanel.updateUserInfo(loginUser);
+        switchToFriendsPanel();
     }
 }

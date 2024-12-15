@@ -76,17 +76,17 @@ public class ChatWindow extends JFrame {
     }
 
     public void handleChatMessage(String msg) {
-        System.out.println("수신된 메시지: " + msg);
+        System.out.println("[개발용] : 수신된 메시지: " + msg);
 
         if (msg.startsWith("[이모티콘] ")) {
             String[] tokens = msg.split(" ", 3);
             if (tokens.length == 3) {
                 String senderLoginID = tokens[1]; // 보낸 사람의 ID
                 String emojiFileName = tokens[2]; // 이모티콘 파일 이름
-                System.out.println("이모티콘 메시지로 인식됨: " + senderLoginID + ", 파일: " + emojiFileName);
+                System.out.println("[개발용] : 이모티콘 메시지로 인식됨: " + senderLoginID + ", 파일: " + emojiFileName);
                 appendEmoji(senderLoginID, emojiFileName); // 두 개의 매개변수 전달
             } else {
-                System.err.println("이모티콘 메시지 형식이 잘못되었습니다.");
+                System.err.println("[개발용] : 이모티콘 메시지 형식이 잘못되었습니다.");
             }
         } else {
             // 일반 메시지 처리
@@ -159,28 +159,28 @@ public class ChatWindow extends JFrame {
     }
 
     protected void appendEmoji(String senderLoginID, String emojiFileName) {
-        System.out.println("appendEmoji 호출됨: senderLoginID=" + senderLoginID + ", emojiFileName=" + emojiFileName);
+        System.out.println("[개발용] : appendEmoji 호출됨: senderLoginID=" + senderLoginID + ", emojiFileName=" + emojiFileName);
         String emojiPath = emojiFileName;
         File emojiFile = new File(emojiPath);
 
-        System.out.println("이모티콘 경로 확인: " + emojiPath);
+        System.out.println("[개발용] : 이모티콘 경로 확인: " + emojiPath);
 
         if (!emojiFile.exists()) {
-            System.err.println("이모티콘 파일이 존재하지 않습니다: " + emojiPath);
+            System.err.println("[개발용] : 이모티콘 파일이 존재하지 않습니다: " + emojiPath);
             return;
         }
 
         try {
             String imgTag = "<img src='file://" + emojiFile.getAbsolutePath().replace("\\", "/") + "' width='64' height='64'>";
-            System.out.println("생성된 img 태그: " + imgTag);
+            System.out.println("[개발용] : 생성된 img 태그: " + imgTag);
 
             String alignment = senderLoginID.equals(loginID) ? "right" : "left";
             String senderStyle = senderLoginID.equals(loginID) ? "나" : senderLoginID;
 
             appendToChat(imgTag, alignment, senderStyle);
-            System.out.println("이모티콘 추가 성공: " + emojiFile.getAbsolutePath());
+            System.out.println("[개발용] : 이모티콘 추가 성공: " + emojiFile.getAbsolutePath());
         } catch (Exception e) {
-            System.err.println("이모티콘 추가 중 오류 발생: " + e.getMessage());
+            System.err.println("[개발용] : 이모티콘 추가 중 오류 발생: " + e.getMessage());
         }
     }
 }

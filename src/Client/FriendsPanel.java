@@ -1,5 +1,7 @@
 package Client;
 
+import Model.User;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -14,10 +16,17 @@ public class FriendsPanel extends JPanel {
     private JButton acceptFriendButton = new JButton("수락"); // 친구 요청 수락 버튼
     private JButton rejectFriendButton = new JButton("거절"); // 친구 요청 거절 버튼
 
+    // 사용자 정보 표시를 위한 레이블들
+    private JLabel idValueLabel = new JLabel();
+    private JLabel nameValueLabel = new JLabel();
+    private JLabel birthdayValueLabel = new JLabel();
+    private JLabel nicknameValueLabel = new JLabel();
+    private JLabel statusMessageValueLabel = new JLabel();
+
     public FriendsPanel() {
         setLayout(new BorderLayout());
 
-        // 상단 배너
+        // 상단 배너 패널
         JPanel bannerPanel = new JPanel(new BorderLayout());
         JLabel bannerLabel = new JLabel("친구", SwingConstants.LEFT); // 배너 제목
         bannerLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
@@ -29,6 +38,31 @@ public class FriendsPanel extends JPanel {
         bannerPanel.add(bannerLabel, BorderLayout.WEST);
         bannerPanel.add(addFriendButton, BorderLayout.EAST);
         bannerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        // 사용자 정보 패널
+        JPanel userInfoPanel = new JPanel(new GridLayout(5, 2, 5, 5)); // 5행 2열, 가로/세로 간격 5px
+        userInfoPanel.setBorder(BorderFactory.createTitledBorder("내 정보"));
+
+        userInfoPanel.add(new JLabel("ID: "));
+        userInfoPanel.add(idValueLabel);
+
+        userInfoPanel.add(new JLabel("이름: "));
+        userInfoPanel.add(nameValueLabel);
+
+        userInfoPanel.add(new JLabel("생일: "));
+        userInfoPanel.add(birthdayValueLabel);
+
+        userInfoPanel.add(new JLabel("닉네임: "));
+        userInfoPanel.add(nicknameValueLabel);
+
+        userInfoPanel.add(new JLabel("상태 메시지: "));
+        userInfoPanel.add(statusMessageValueLabel);
+
+        // 상단 컨테이너 패널 생성
+        JPanel topPanel = new JPanel();
+        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
+        topPanel.add(bannerPanel);
+        topPanel.add(userInfoPanel);
 
         // 친구 목록 패널
         JPanel friendsListPanel = new JPanel(new BorderLayout());
@@ -47,7 +81,7 @@ public class FriendsPanel extends JPanel {
         friendRequestsPanel.add(friendRequestButtons, BorderLayout.SOUTH);
 
         // 전체 구성
-        add(bannerPanel, BorderLayout.PAGE_START); // 상단 배너 추가
+        add(topPanel, BorderLayout.PAGE_START); // 상단 컨테이너 패널 추가
         add(friendsListPanel, BorderLayout.CENTER); // 친구 목록 추가
         add(friendRequestsPanel, BorderLayout.SOUTH); // 친구 요청 추가
     }
@@ -79,5 +113,16 @@ public class FriendsPanel extends JPanel {
 
     public JList<String> getFriendRequestsListUI() {
         return friendRequestsListUI;
+    }
+
+    // 사용자 정보 업데이트 메서드
+    public void updateUserInfo(User loginUser) {
+        SwingUtilities.invokeLater(() -> {
+            idValueLabel.setText(loginUser.getLoginID());
+            nameValueLabel.setText(loginUser.getUserName());
+            birthdayValueLabel.setText(loginUser.getBirthday());
+            nicknameValueLabel.setText(loginUser.getNickname());
+            statusMessageValueLabel.setText(loginUser.getInformation());
+        });
     }
 }

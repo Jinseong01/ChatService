@@ -162,7 +162,7 @@ public class AdditionalOptionsWindow extends JFrame {
 
                                 // 선택된 이모티콘 파일의 경로를 저장
                                 selectedEmojiLabel.setName(emojiFile.getAbsolutePath()); // 절대 경로 설정
-                                System.out.println("선택된 이모티콘 경로: " + emojiFile.getAbsolutePath()); // 디버깅 출력
+                                System.out.println("[개발용] : 선택된 이모티콘 경로: " + emojiFile.getAbsolutePath()); // 디버깅 출력
                             }
                         });
                     }
@@ -177,7 +177,7 @@ public class AdditionalOptionsWindow extends JFrame {
                         if (selectedEmojiLabel != null && selectedEmojiLabel.getName() != null) {
                             File emojiFile = new File(selectedEmojiLabel.getName());
 
-                            System.out.println("이모티콘 파일 경로: " + emojiFile.getAbsolutePath()); // 디버깅 출력
+                            System.out.println("[개발용] : 이모티콘 파일 경로: " + emojiFile.getAbsolutePath()); // 디버깅 출력
 
                             if (!emojiFile.exists()) {
                                 JOptionPane.showMessageDialog(this, "선택한 이모티콘 파일이 없습니다.", "오류", JOptionPane.WARNING_MESSAGE);
