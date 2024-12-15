@@ -137,7 +137,17 @@ public class UserHandler extends Thread {
             this.loginID = userLoginID;
             this.user = ServerApp.userCredentials.get(userLoginID);
             ServerApp.onlineUsers.put(userLoginID, this);
-            out.println("/login success");
+
+            // 사용자 정보 포함하여 로그인 성공 메시지 전송
+            String successMsg = String.format("/login success %s %s %s %s %s %s",
+                    user.getLoginID(),
+                    user.getLoginPW(),
+                    user.getUserName(),
+                    user.getBirthday(),
+                    user.getNickname(),
+                    user.getInformation());
+            out.println(successMsg);
+
             System.out.println(userLoginID + " 로그인 성공");
             // 친구 목록 동기화
             handleGetFriends();

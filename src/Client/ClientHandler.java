@@ -1,5 +1,7 @@
 package Client;
 
+import Model.User;
+
 import javax.swing.*;
 import java.io.*;
 import java.net.*;
@@ -12,21 +14,7 @@ public class ClientHandler {
     private Socket socket;
     private BufferedReader in;
     private PrintWriter out;
-    private String loginID = null;
-
-    private List<ClientHandler> clients; // 서버에 연결된 모든 클라이언트
-
-    public ClientHandler(Socket socket, List<ClientHandler> clients) {
-        this.socket = socket;
-        this.clients = clients;
-
-        try {
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            out = new PrintWriter(socket.getOutputStream(), true);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    private User loginUser = null;
 
     // 채팅방ID -> ChatWindow 맵
     private Map<String, ChatWindow> chatWindows = new HashMap<>();
@@ -52,14 +40,6 @@ public class ClientHandler {
 
     public void sendMessage(String message) {
         if (out != null) out.println(message);
-    }
-
-    public String getLoginID() {
-        return loginID;
-    }
-
-    public void setLoginID(String loginID) {
-        this.loginID = loginID;
     }
 
     public void addChatWindow(String chatRoomId, ChatWindow cw) {
@@ -92,7 +72,7 @@ public class ClientHandler {
         }
 
         // 서버로 전송
-        String command = "/sendemoji " + chatRoomId + " " + loginID + " " + emojiFileName;
+        String command = "/sendemoji " + chatRoomId + " " + loginUser.getLoginID() + " " + emojiFileName;
         System.out.println("전송 명령어: " + command); // 디버깅 출력
 
         // 정확히 한 줄만 전송
@@ -201,12 +181,6 @@ public class ClientHandler {
             }
         }
 
-        private void broadcastMessage(String message) {
-            for (ClientHandler client : clients) {
-                client.out.println(message);
-            }
-        }
-
         private void handleEmojiMessage(String msg) {
             String[] tokens = msg.split(" ", 4); // chatRoomId 추가
             if (tokens.length == 4) {
@@ -222,15 +196,25 @@ public class ClientHandler {
         }
 
         private void handleLoginResponse(String msg) {
-            String[] tokens = msg.split(" ", 3);
-            if (tokens.length < 2) return;
+            String[] tokens = msg.split(" ", 8);
+
+            if (tokens.length < 8) return;
+
             if (tokens[1].equals("success")) {
-                setLoginID(ui.getLoginIDFromField());
+                String loginID = tokens[2];
+                String loginPW = tokens[3];
+                String userName = tokens[4];
+                String birthday = tokens[5];
+                String nickname = tokens[6];
+                String information = tokens[7];
+                // loginUser 객체 생성
+                loginUser = new User(loginID, loginPW, userName, birthday, nickname, information);
+
                 SwingUtilities.invokeLater(() -> {
-                    ui.switchToChatPanel();
+                    ui.handleLoginSuccess(loginUser);
                 });
             } else {
-                String errorMsg = tokens.length >= 3 ? tokens[2] : "로그인 실패";
+                String errorMsg = tokens.length >= 8 ? tokens[2] : "로그인 실패";
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(ui.getFrame(), "로그인 실패: " + errorMsg);
                 });
@@ -352,7 +336,7 @@ public class ClientHandler {
 
         private void handleAddMemoResponse(String msg) {
             if (msg.contains("success")) {
-                sendMessage("/getmemos " + loginID);
+                sendMessage("/getmemos " + loginUser.getLoginID());
             } else {
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(ui.getFrame(), "메모 추가 실패.");
@@ -362,7 +346,7 @@ public class ClientHandler {
 
         private void handleEditMemoResponse(String msg) {
             if (msg.contains("success")) {
-                sendMessage("/getmemos " + loginID);
+                sendMessage("/getmemos " + loginUser.getLoginID());
             } else {
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(ui.getFrame(), "메모 수정 실패.");
@@ -372,7 +356,7 @@ public class ClientHandler {
 
         private void handleDeleteMemoResponse(String msg) {
             if (msg.contains("success")) {
-                sendMessage("/getmemos " + loginID);
+                sendMessage("/getmemos " + loginUser.getLoginID());
             } else {
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(ui.getFrame(), "메모 삭제 실패.");
