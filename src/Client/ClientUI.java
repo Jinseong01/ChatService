@@ -460,13 +460,14 @@ public class ClientUI extends JFrame {
             return;
         }
         String chatRoomId = selectedChatRoom.substring(idStart + 4, idEnd);
+        String chatRoomName = selectedChatRoom.substring(0, idStart).replace("(", "").trim();
 
         if (loginUser == null) {
             JOptionPane.showMessageDialog(frame, "로그인 정보가 없습니다.");
             return;
         }
 
-        ChatWindow chatWindow = new ChatWindow(loginUser.getLoginID(), chatRoomId, clientHandler);
+        ChatWindow chatWindow = new ChatWindow(loginUser.getLoginID(), chatRoomId, chatRoomName, clientHandler);
         clientHandler.addChatWindow(chatRoomId, chatWindow);
         chatWindow.setVisible(true);
     }

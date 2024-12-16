@@ -15,6 +15,7 @@ import java.util.Map;
 
 public class ChatWindow extends JFrame {
     private String chatRoomId;
+    private String chatRoomName;
     private ClientHandler handler;
     private String loginID;
 
@@ -33,12 +34,13 @@ public class ChatWindow extends JFrame {
     // 프로필 이미지 캐싱
     private Map<String, ImageIcon> profileImageCache = new HashMap<>();
 
-    public ChatWindow(String loginID, String chatRoomId, ClientHandler handler) {
+    public ChatWindow(String loginID, String chatRoomId, String chatRoomName, ClientHandler handler) {
         this.loginID = loginID;
         this.chatRoomId = chatRoomId;
+        this.chatRoomName = chatRoomName;
         this.handler = handler;
 
-        setTitle("채팅방 - " + chatRoomId);
+        setTitle(chatRoomName);
         setSize(400, 600);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 

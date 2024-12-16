@@ -452,7 +452,7 @@ public class UserHandler extends Thread {
                 ServerApp.onlineUsers.get(member.getLoginID()).sendMessage("/createchat " + chatRoomId + " " + chatRoomName);
             }
         }
-        out.println("/createchat_success 채팅방이 생성되었습니다. ID: " + chatRoomId);
+        out.println("/createchat_success 채팅방이 생성되었습니다.");
     }
 
     private void handleGetChatHistory(String msg) {
