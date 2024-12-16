@@ -165,6 +165,13 @@ public class UserHandler extends Thread {
         String nickname = tokens[5];
         String information = tokens[6].replace("_", " ");
 
+        // 생일 형식 확인 (정규식: YYYY-MM-DD)
+        if (!birthday.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            out.println("/signup fail 생일 형식 오류: YYYY-MM-DD 형식이어야 합니다.");
+            return;
+        }
+
+        // 사용자 id 중복 확인
         if (ServerApp.userCredentials.containsKey(userLoginID)) {
             out.println("/signup fail 이미 존재하는 사용자입니다.");
         } else {
