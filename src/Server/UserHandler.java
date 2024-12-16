@@ -4,6 +4,9 @@ import Model.ChatRoom;
 import Model.User;
 import java.io.*;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -119,7 +122,7 @@ public class UserHandler extends Thread {
     }
 
     // 로그인 처리
-    private void handleLogin(String msg) {
+    private void handleLogin(String msg) throws IOException {
         // 형식: /login loginID loginPW
         String[] tokens = msg.split(" ", 3);
         if (tokens.length != 3) {
@@ -140,14 +143,29 @@ public class UserHandler extends Thread {
             this.user = ServerApp.userCredentials.get(userLoginID);
             ServerApp.onlineUsers.put(userLoginID, this);
 
+            if(user.getProfileImage()==null) {
+                Path imagePath = Paths.get("src", "Resources", "images", "BasicProfile.jpg");
+
+                // 파일을 바이너리로 읽기
+                byte[] imageBytes = Files.readAllBytes(imagePath);
+
+                // Base64로 인코딩
+                String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+
+                // user 객체에 설정
+                user.setProfileImage(base64Image);
+            }
+
             // 사용자 정보 포함하여 로그인 성공 메시지 전송
-            String successMsg = String.format("/login success %s %s %s %s %s %s",
+            String successMsg = String.format("/login success %s %s %s %s %s %s %s",
                     user.getLoginID(),
                     user.getLoginPW(),
                     user.getUserName(),
                     user.getBirthday(),
                     user.getNickname(),
-                    user.getInformation());
+                    user.getInformation(),
+                    user.getProfileImage()
+            );
             out.println(successMsg);
 
             System.out.println("[개발용] : " + userLoginID + " 로그인 성공");

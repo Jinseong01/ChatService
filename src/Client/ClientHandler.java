@@ -245,9 +245,9 @@ public class ClientHandler {
 //        }
 
         private void handleLoginResponse(String msg) {
-            String[] tokens = msg.split(" ", 8);
+            String[] tokens = msg.split(" ", 9);
 
-            if (tokens.length < 8) return;
+            if (tokens.length < 9) return;
 
             if (tokens[1].equals("success")) {
                 String loginID = tokens[2];
@@ -256,8 +256,11 @@ public class ClientHandler {
                 String birthday = tokens[5];
                 String nickname = tokens[6];
                 String information = tokens[7];
+                String profileImage = tokens[8];
+
                 // loginUser 객체 생성
                 loginUser = new User(loginID, loginPW, userName, birthday, nickname, information);
+                loginUser.setProfileImage(profileImage);
 
                 System.out.println("[개발용] : " + loginUser);
 
@@ -265,7 +268,7 @@ public class ClientHandler {
                     ui.handleLoginSuccess(loginUser);
                 });
             } else {
-                String errorMsg = tokens.length >= 8 ? tokens[2] : "로그인 실패";
+                String errorMsg = tokens.length >= 9 ? tokens[2] : "로그인 실패";
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(ui.getFrame(), "로그인 실패: " + errorMsg);
                 });

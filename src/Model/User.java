@@ -12,6 +12,7 @@ public class User {
     private String birthday;      // 생일
     private String nickname;      // 닉네임
     private String information;   // 상태 메시지
+    private String profileImage;  // 프로필 이미지
     private Set<String> friends;  // 친구 목록
     private List<String> memos;   // 메모 목록
 
@@ -102,8 +103,17 @@ public class User {
                 "  birthday='" + birthday + "',\n" +
                 "  nickname='" + nickname + "',\n" +
                 "  information='" + information + "',\n" +
+                "  profileImage ='" + profileImage + "',\n" +
                 "  friends=" + friends + ",\n" +
                 "  memos=" + memos + "\n" +
                 "}";
+    }
+
+    public String getProfileImage() {
+        return profileImage;
+    }
+
+    public void setProfileImage(String profileImage) {
+        this.profileImage = profileImage;
     }
 }
