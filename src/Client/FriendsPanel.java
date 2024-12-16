@@ -168,48 +168,69 @@ public class FriendsPanel extends JPanel {
     }
 
     // 커스텀 셀 렌더러 클래스
-    private static class CustomFriendListCellRenderer extends DefaultListCellRenderer {
+    private static class CustomFriendListCellRenderer extends JPanel implements ListCellRenderer<Friend> {
+        private JLabel nameLabel;
+        private JLabel statusMessageLabel;
+        private JLabel profileImageLabel;
+
+        public CustomFriendListCellRenderer() {
+            setLayout(new BorderLayout());
+            setOpaque(true); // 배경색을 적용할 수 있도록 설정
+
+            // 왼쪽: 이미지와 이름
+            profileImageLabel = new JLabel();
+            profileImageLabel.setPreferredSize(new Dimension(40, 40));
+
+            nameLabel = new JLabel();
+            nameLabel.setFont(new Font("SansSerif", Font.PLAIN, 16));
+
+            JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+            leftPanel.setOpaque(false); // 부모 배경색을 따름
+            leftPanel.add(profileImageLabel);
+            leftPanel.add(nameLabel);
+
+            // 오른쪽: 상태 메시지
+            statusMessageLabel = new JLabel();
+            statusMessageLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+            statusMessageLabel.setForeground(Color.GRAY);
+            statusMessageLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+            statusMessageLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10)); // 오른쪽 여백 추가
+
+            add(leftPanel, BorderLayout.WEST);
+            add(statusMessageLabel, BorderLayout.EAST);
+        }
+
         @Override
-        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        public Component getListCellRendererComponent(JList<? extends Friend> list, Friend friend, int index, boolean isSelected, boolean cellHasFocus) {
+            // 이름 설정
+            nameLabel.setText(friend.getUserName());
 
-            if (value instanceof Friend) {
-                Friend friend = (Friend) value;
+            // 상태 메시지 설정
+            String statusMessage = friend.getInformation();
+            statusMessageLabel.setText(statusMessage != null ? statusMessage : "");
 
-                // 프로필 이미지 설정
-                if (friend.getProfileImage() != null && !friend.getProfileImage().isEmpty()) {
-                    try {
-                        byte[] imageBytes = Base64.getDecoder().decode(friend.getProfileImage());
-                        ImageIcon profileIcon = new ImageIcon(imageBytes);
-
-                        // 이미지 크기 조정
-                        Image image = profileIcon.getImage().getScaledInstance(64, 64, Image.SCALE_SMOOTH);
-                        profileIcon = new ImageIcon(image);
-
-                        label.setIcon(profileIcon);
-                    } catch (IllegalArgumentException e) {
-                        System.err.println("Base64 디코딩 실패: " + e.getMessage());
-                        label.setIcon(null);
-                    }
-                } else {
-                    label.setIcon(null);
+            // 프로필 이미지 설정
+            if (friend.getProfileImage() != null && !friend.getProfileImage().isEmpty()) {
+                try {
+                    byte[] imageBytes = Base64.getDecoder().decode(friend.getProfileImage());
+                    ImageIcon profileIcon = new ImageIcon(imageBytes);
+                    Image image = profileIcon.getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH);
+                    profileImageLabel.setIcon(new ImageIcon(image));
+                } catch (IllegalArgumentException e) {
+                    profileImageLabel.setIcon(null);
                 }
-
-                // 텍스트 구성: 이름 | 상태 메시지
-                String displayText = friend.getUserName();
-                if (friend.getInformation() != null && !friend.getInformation().isEmpty()) {
-                    displayText += " | " + friend.getInformation(); // 상태 메시지를 추가
-                }
-
-                label.setText(displayText);
+            } else {
+                profileImageLabel.setIcon(null);
             }
 
-            // 텍스트 스타일 및 셀 테두리 설정
-            label.setFont(new Font("SansSerif", Font.PLAIN, 16));
-            label.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY));
-            label.setPreferredSize(new Dimension(label.getWidth(), 40)); // 항목 높이 설정
+            // 선택된 항목의 배경색 설정
+            if (isSelected) {
+                setBackground(new Color(220, 240, 255)); // 선택된 항목 배경색
+            } else {
+                setBackground(Color.WHITE); // 기본 배경색
+            }
 
-            return label;
+            return this;
         }
     }
 }

@@ -56,11 +56,14 @@ public class ChatPanel extends JPanel {
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
-            // 채팅방 이름 추출
+            // 채팅방 이름 가공: 괄호 (ID: ...) 부분 제거
             String chatRoomName = value.toString();
+            if (chatRoomName.contains(" (ID:")) { // " (ID:" 가 있는 경우
+                chatRoomName = chatRoomName.substring(0, chatRoomName.indexOf(" (ID:")).trim();
+            }
 
             // 스타일 변경
-            label.setText(chatRoomName); // 이름만 표시
+            label.setText(chatRoomName); // 가공된 채팅방 이름 설정
             label.setFont(new Font("SansSerif", Font.PLAIN, 16)); // 폰트 크기 설정
             label.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createEmptyBorder(10, 10, 10, 10), // 패딩 추가
