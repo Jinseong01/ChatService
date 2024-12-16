@@ -142,6 +142,10 @@ public class ClientHandler {
         sendMessage(command);
     }
 
+    public User getLoginUser() {
+        return loginUser;
+    }
+
     private class Listener implements Runnable {
         @Override
         public void run() {

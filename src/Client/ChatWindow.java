@@ -1,11 +1,17 @@
 package Client;
 
+import Model.Friend;
+
 import javax.swing.*;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ChatWindow extends JFrame {
     private String chatRoomId;
@@ -16,11 +22,16 @@ public class ChatWindow extends JFrame {
     private JScrollPane chatScrollPane = new JScrollPane(chatArea);
     private JTextField inputField = new JTextField(15);
     private JButton sendButton = new JButton("전송");
-    private StringBuilder htmlContent = new StringBuilder("<html><body>");
     private JButton additionalOptionsButton = new JButton("+"); // 추가 옵션 버튼
 
     private boolean receivingHistory = false;
     private List<String> tempChatHistory = new ArrayList<>();
+
+    // 기본 이미지 Base64 문자열 (32x32 PNG 예시)
+    private static final String DEFAULT_BASE64_IMAGE = "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABKElEQVRYR+2XMQrCQBBFf3ZQ3ZCQVUgVUAVSgVWgJSgFJQgVQAVUgV6gJ0gJVKQFwGfrhcTHznv7q3Vra7r/X3FhFkBmCNAGYDWIBRwF3gG8A9wApAU8A+qAg4AtAMOAeVZxDJmBnK6AK8BtAAcQfqYBN0D5oAf4b1Fv7OuwAQy4FSgBbgE3oEeI7XGYI8oPczAm2JmKQd4BtIh2gHeqAewCOQFvALdgXKA3sCtwO/B/4GoAVUAmcAj4AjYBEwBbgGsF7qTjgHoBvwAfQJtwKZADGMM7kXvThkAX0HpwGwBTwGjAHzAbsAMeA/gAXAKXAl0BkgLWgAAAABJRU5ErkJggg=="; // 32x32 PNG 이미지의 Base64 문자열 예시
+
+    // 프로필 이미지 캐싱
+    private Map<String, ImageIcon> profileImageCache = new HashMap<>();
 
     public ChatWindow(String loginID, String chatRoomId, ClientHandler handler) {
         this.loginID = loginID;
@@ -32,11 +43,12 @@ public class ChatWindow extends JFrame {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         chatArea.setEditable(false);
-        chatArea.setContentType("text/html");
-        chatArea.setText("<html><body></body></html>");
+        // "text/plain"으로 설정하면 StyledDocument를 통한 이미지 삽입이 가능하지만, 이미지 삽입을 위한 별도의 처리가 필요합니다.
+        chatArea.setContentType("text/plain");
+        chatArea.setText("");
         chatArea.setCaretPosition(chatArea.getDocument().getLength());
 
-        JPanel inputPanel = new JPanel(new BorderLayout(5,5));
+        JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
         inputPanel.add(inputField, BorderLayout.CENTER);
         inputPanel.add(sendButton, BorderLayout.EAST);
         inputPanel.add(additionalOptionsButton, BorderLayout.WEST); // + 버튼 추가
@@ -52,7 +64,7 @@ public class ChatWindow extends JFrame {
         });
 
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         mainPanel.add(chatScrollPane, BorderLayout.CENTER);
         mainPanel.add(inputPanel, BorderLayout.SOUTH);
 
@@ -77,31 +89,32 @@ public class ChatWindow extends JFrame {
     }
 
     public void handleChatMessage(String msg) {
-        System.out.println("[개발용] : 수신된 메시지: " + msg);
+        SwingUtilities.invokeLater(() -> {
+            System.out.println("[개발용] : 수신된 메시지: " + msg);
 
-        if (msg.startsWith("[이모티콘] ")) {
-            String[] tokens = msg.split(" ", 4);
-            if (tokens.length == 4) {
-                String senderLoginID = tokens[1]; // 보낸 사람의 ID
-                String time = tokens[2];
-                String emojiFileName = tokens[3]; // 이모티콘 파일 이름
-                System.out.println("[개발용] : 이모티콘 메시지로 인식됨: " + senderLoginID + ", 파일: " + emojiFileName);
-                appendEmoji(senderLoginID, time, emojiFileName); // 두 개의 매개변수 전달
+            if (msg.startsWith("[이모티콘] ")) {
+                String[] tokens = msg.split(" ", 4);
+                if (tokens.length == 4) {
+                    String senderLoginID = tokens[1]; // 보낸 사람의 ID
+                    String time = tokens[2];
+                    String emojiFileName = tokens[3]; // 이모티콘 파일 이름
+                    appendEmoji(senderLoginID, time, emojiFileName); // 프로필 이미지 포함
+                } else {
+                    System.err.println("[개발용] : 이모티콘 메시지 형식이 잘못되었습니다.");
+                }
             } else {
-                System.err.println("[개발용] : 이모티콘 메시지 형식이 잘못되었습니다.");
+                // 일반 메시지 처리
+                String[] tokens = msg.split(" ", 5);
+                if (tokens.length == 5) {
+                    String senderLoginID = tokens[2];
+                    String time = tokens[3];
+                    String message = tokens[4];
+                    appendMessage(senderLoginID, time, message); // 프로필 이미지 포함
+                } else {
+                    System.err.println("일반 메시지 형식이 잘못되었습니다: " + msg);
+                }
             }
-        } else {
-            // 일반 메시지 처리
-            String[] tokens = msg.split(" ", 5);
-            if (tokens.length == 5) {
-                String senderLoginID = tokens[2];
-                String time = tokens[3];
-                String message = tokens[4];
-                appendMessage(senderLoginID, time, message);
-            } else {
-                System.err.println("일반 메시지 형식이 잘못되었습니다: " + msg);
-            }
-        }
+        });
     }
 
     public void handleChatHistoryStart() {
@@ -120,25 +133,91 @@ public class ChatWindow extends JFrame {
         tempChatHistory.clear();
     }
 
-    private void appendToChat(String time, String content, String alignment, String senderStyle) {
-        SwingUtilities.invokeLater(() -> {
-            htmlContent.append("<div style='text-align: ")
-                    .append(alignment)
-                    .append(";'><b>")
-                    .append(senderStyle)
-                    .append("</b>:<br>")
-                    .append(time)
-                    .append(content)
-                    .append("</div>");
-            chatArea.setText(htmlContent.toString());
-            chatArea.setCaretPosition(chatArea.getDocument().getLength());
-        });
+    private String[] getSenderProfile(String senderLoginID) {
+        String base64Image;
+        String senderStyle;
+
+        // sender 찾기
+        Friend sender = handler.getLoginUser().getFriends().stream()
+                .filter(friend -> friend.getLoginID().equals(senderLoginID))
+                .findFirst()
+                .orElse(null);
+
+        // 디버깅용 로그
+        if (sender == null) {
+            System.out.println("[디버깅] sender가 null입니다. senderLoginID: " + senderLoginID);
+        } else {
+            System.out.println("[디버깅] sender가 존재합니다. UserName: " + sender.getUserName() +
+                    ", ProfileImage: " + (sender.getProfileImage() == null ? "null" : "존재"));
+        }
+
+        if (sender != null && sender.getProfileImage() != null && !sender.getProfileImage().isEmpty()) {
+            // sender의 프로필 이미지 사용
+            base64Image = sender.getProfileImage();
+            senderStyle = sender.getUserName();
+        } else {
+            if (senderLoginID.equals(loginID)) {
+                // 발신자가 본인인 경우 자신의 프로필 이미지 사용
+                base64Image = handler.getLoginUser().getProfileImage();
+                senderStyle = "나";
+            } else {
+                // 발신자가 친구가 아닌 경우 기본 이미지 사용
+                base64Image = DEFAULT_BASE64_IMAGE;
+                senderStyle = senderLoginID;
+            }
+        }
+
+        // 디버깅용 로그
+        System.out.println("[디버깅] 사용되는 Base64 이미지 문자열: " + base64Image);
+
+        return new String[]{base64Image, senderStyle};
+    }
+
+    private ImageIcon getProfileImage(String loginID, String base64Image) {
+        if (profileImageCache.containsKey(loginID)) {
+            return profileImageCache.get(loginID);
+        } else {
+            ImageIcon icon = base64ToImageIcon(base64Image);
+            profileImageCache.put(loginID, icon);
+            return icon;
+        }
     }
 
     private void appendMessage(String senderLoginID, String time, String message) {
         String alignment = senderLoginID.equals(loginID) ? "right" : "left";
-        String senderStyle = senderLoginID.equals(loginID) ? "나" : senderLoginID;
-        appendToChat(time, message, alignment, senderStyle);
+
+        // 발신자의 프로필 이미지와 스타일 가져오기
+        String[] profile = getSenderProfile(senderLoginID);
+        String base64Image = profile[0];
+        String senderStyle = profile[1];
+
+        // StyledDocument에 이미지와 텍스트 삽입
+        StyledDocument doc = chatArea.getStyledDocument();
+
+        try {
+            // 시간 정보 삽입
+            insertTime(doc, time, alignment);
+
+            // 프로필 이미지 삽입과 메시지 텍스트 삽입
+            if (alignment.equals("left")) {
+                // 발신자가 다른 사용자일 경우: 이미지 먼저, 메시지 나중에
+                insertProfileImage(doc, senderLoginID, base64Image, alignment);
+                insertMessageText(doc, senderStyle + ": " + message + " ", alignment);
+            } else {
+                // 발신자가 본인인 경우: 메시지 먼저, 이미지 나중에
+                insertMessageText(doc, senderStyle + ": " + message + " ", alignment);
+                insertProfileImage(doc, senderLoginID, base64Image, alignment);
+            }
+
+            // 줄바꿈 추가
+            doc.insertString(doc.getLength(), "\n", null);
+
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
+
+        // 채팅 영역 스크롤 이동
+        chatArea.setCaretPosition(doc.getLength());
     }
 
     protected void appendImage(String senderLoginID, String time, String imagePath) {
@@ -153,24 +232,52 @@ public class ChatWindow extends JFrame {
         }
 
         try {
-            String imgTag = null;
+            // 이미지 로드
+            ImageIcon icon = new ImageIcon(imageFile.getAbsolutePath());
+            if (icon.getIconWidth() == -1) {
+                System.err.println("이미지 로드 실패: " + imagePath);
+                return;
+            }
 
-            if (os.contains("win")) {
-                // Windows일 경우
-                imgTag = "<img src='file:\\" + imageFile.getAbsolutePath() + "' width='128' height='128'>";
-            }
-            else {
-                imgTag = "<img src='file://" + imageFile.getAbsolutePath().replace("\\", "/") + "' width='128' height='128'>";
-            }
+            // 이미지 크기 조정
+            Image image = icon.getImage().getScaledInstance(64, 64, Image.SCALE_SMOOTH);
+            ImageIcon scaledIcon = new ImageIcon(image);
+
+            // 단락 정렬 설정
             String alignment = senderLoginID.equals(loginID) ? "right" : "left";
-            String senderStyle = senderLoginID.equals(loginID) ? "나" : senderLoginID;
 
-            appendToChat(time, imgTag, alignment, senderStyle);
+            // 발신자의 프로필 이미지와 스타일 가져오기
+            String[] profile = getSenderProfile(senderLoginID);
+            String base64Image = profile[0];
+            String senderStyle = profile[1];
 
-            System.out.println("이미지 추가 성공: " + imageFile.getAbsolutePath());
-        } catch (Exception e) {
-            System.err.println("이미지 추가 중 오류 발생: " + e.getMessage());
+            StyledDocument doc = chatArea.getStyledDocument();
+
+            // 시간 정보 삽입
+            insertTime(doc, time, alignment);
+
+            // 프로필 이미지 삽입과 이미지 삽입
+            if (alignment.equals("left")) {
+                // 발신자가 다른 사용자일 경우: 이미지 먼저, 메시지 나중에
+                insertProfileImage(doc, senderLoginID, base64Image, alignment);
+                insertMessageText(doc, senderStyle + " : ", alignment);
+                insertImage(doc, scaledIcon, alignment);
+            } else {
+                // 발신자가 본인인 경우: 메시지 먼저, 이미지 나중에
+                insertMessageText(doc, senderStyle + ": ", alignment);
+                insertImage(doc, scaledIcon, alignment);
+                insertProfileImage(doc, senderLoginID, base64Image, alignment);
+            }
+
+            // 줄바꿈 추가
+            doc.insertString(doc.getLength(), "\n", null);
+
+        } catch (BadLocationException e) {
+            e.printStackTrace();
         }
+
+        // 채팅 영역 스크롤 이동
+        chatArea.setCaretPosition(chatArea.getDocument().getLength());
     }
 
     protected void appendEmoji(String senderLoginID, String time, String emojiFileName) {
@@ -188,25 +295,111 @@ public class ChatWindow extends JFrame {
         }
 
         try {
-            String imgTag = null;
-
-            // OS 구분해서 이미지 출력
-            if (os.contains("win")) {
-                // Windows일 경우
-                imgTag = "<img src='file:\\" + emojiFile.getAbsolutePath() + "' width='64' height='64'>";
+            // 이모티콘 로드
+            ImageIcon icon = new ImageIcon(emojiFile.getAbsolutePath());
+            if (icon.getIconWidth() == -1) {
+                System.err.println("이모티콘 이미지 로드 실패: " + emojiPath);
+                return;
             }
-            else {
-                imgTag = "<img src='file://" + emojiFile.getAbsolutePath().replace("\\", "/") + "' width='64' height='64'>";
-            }
-            System.out.println("[개발용] : 생성된 img 태그: " + imgTag);
 
+            // 이모티콘 크기 조정
+            Image image = icon.getImage().getScaledInstance(64, 64, Image.SCALE_SMOOTH);
+            ImageIcon scaledIcon = new ImageIcon(image);
+
+            // 단락 정렬 설정
             String alignment = senderLoginID.equals(loginID) ? "right" : "left";
-            String senderStyle = senderLoginID.equals(loginID) ? "나" : senderLoginID;
 
-            appendToChat(time, imgTag, alignment, senderStyle);
-            System.out.println("[개발용] : 이모티콘 추가 성공: " + emojiFile.getAbsolutePath());
-        } catch (Exception e) {
-            System.err.println("[개발용] : 이모티콘 추가 중 오류 발생: " + e.getMessage());
+            // 발신자의 프로필 이미지와 스타일 가져오기
+            String[] profile = getSenderProfile(senderLoginID);
+            String base64Image = profile[0];
+            String senderStyle = profile[1];
+
+            StyledDocument doc = chatArea.getStyledDocument();
+
+            // 시간 정보 삽입
+            insertTime(doc, time, alignment);
+
+            // 프로필 이미지 삽입과 이모티콘 삽입
+            if (alignment.equals("left")) {
+                // 발신자가 다른 사용자일 경우: 이미지 먼저, 메시지 나중에
+                insertProfileImage(doc, senderLoginID, base64Image, alignment);
+                insertMessageText(doc, senderStyle + " : ", alignment);
+                insertEmoji(doc, scaledIcon, alignment);
+            } else {
+                // 발신자가 본인인 경우: 메시지 먼저, 이모티콘 나중에
+                insertMessageText(doc, senderStyle + ": ", alignment);
+                insertEmoji(doc, scaledIcon, alignment);
+                insertProfileImage(doc, senderLoginID, base64Image, alignment);
+            }
+
+            // 줄바꿈 추가
+            doc.insertString(doc.getLength(), "\n", null);
+
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
+
+        // 채팅 영역 스크롤 이동
+        chatArea.setCaretPosition(chatArea.getDocument().getLength());
+    }
+
+    private void insertTime(StyledDocument doc, String time, String alignment) throws BadLocationException {
+        // 시간 정보 삽입
+        doc.insertString(doc.getLength(), "\n", null);
+
+        // 시간 스타일 생성
+        Style timeStyle = chatArea.addStyle("TimeStyle_" + doc.getLength(), null);
+        StyleConstants.setFontSize(timeStyle, 10);
+        StyleConstants.setItalic(timeStyle, true);
+        if (alignment.equals("right")) {
+            StyleConstants.setAlignment(timeStyle, StyleConstants.ALIGN_RIGHT);
+        } else {
+            StyleConstants.setAlignment(timeStyle, StyleConstants.ALIGN_LEFT);
+        }
+        doc.setParagraphAttributes(doc.getLength(), 1, timeStyle, false);
+        doc.insertString(doc.getLength(), time + "\n", timeStyle);
+    }
+
+    private void insertProfileImage(StyledDocument doc, String senderLoginID, String base64Image, String alignment) throws BadLocationException {
+        if (base64Image != null && !base64Image.isEmpty()) {
+            ImageIcon profileIcon = getProfileImage(senderLoginID, base64Image);
+            if (profileIcon != null) {
+                Style imageStyle = chatArea.addStyle("ProfileImage_" + doc.getLength(), null);
+                StyleConstants.setIcon(imageStyle, profileIcon);
+                doc.insertString(doc.getLength(), " ", imageStyle);
+            }
+        }
+    }
+
+    private void insertMessageText(StyledDocument doc, String message, String alignment) throws BadLocationException {
+        // 메시지 텍스트 삽입
+        doc.insertString(doc.getLength(), message, null);
+    }
+
+    private void insertImage(StyledDocument doc, ImageIcon imageIcon, String alignment) throws BadLocationException {
+        Style imageStyle = chatArea.addStyle("ImageStyle_" + doc.getLength(), null);
+        StyleConstants.setIcon(imageStyle, imageIcon);
+        doc.insertString(doc.getLength(), " ", imageStyle);
+    }
+
+    private void insertEmoji(StyledDocument doc, ImageIcon emojiIcon, String alignment) throws BadLocationException {
+        Style emojiStyle = chatArea.addStyle("EmojiStyle_" + doc.getLength(), null);
+        StyleConstants.setIcon(emojiStyle, emojiIcon);
+        doc.insertString(doc.getLength(), " ", emojiStyle);
+    }
+
+    private ImageIcon base64ToImageIcon(String base64Image) {
+        if (base64Image == null || base64Image.isEmpty()) return null;
+        try {
+            byte[] imageBytes = Base64.getDecoder().decode(base64Image);
+            ImageIcon icon = new ImageIcon(imageBytes);
+
+            // 필요에 따라 이미지 크기 조정
+            Image image = icon.getImage().getScaledInstance(32, 32, Image.SCALE_SMOOTH);
+            return new ImageIcon(image);
+        } catch (IllegalArgumentException e) {
+            System.err.println("Base64 디코딩 실패: " + e.getMessage());
+            return null;
         }
     }
 }

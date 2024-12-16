@@ -10,6 +10,7 @@ import java.io.File;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class ClientUI extends JFrame {
     private ClientHandler clientHandler;
@@ -495,6 +496,18 @@ public class ClientUI extends JFrame {
             }
         }
 
+        // loginUser 안에 저장된 친구 정보 업데이트
+        if (loginUser != null) {
+            Set<Friend> friends = loginUser.getFriends();
+            for (Friend friend : friends) {
+                if (friend.getLoginID().equals(loginID)) {
+                    friend.setProfileImage(newProfileImage);
+                    System.out.println("[개발용] : loginUser의 친구 프로필 이미지 업데이트: " + loginID);
+                    break;
+                }
+            }
+        }
+
         // 친구 목록에 없을 경우, 친구 요청 목록에서 업데이트 시도
         if (!updated) {
             System.out.println("[개발용] : 친구 요청 목록에서 프로필 이미지 업데이트 시도: " + loginID);
@@ -516,6 +529,18 @@ public class ClientUI extends JFrame {
                 model.setElementAt(friend, i); // 리스트 모델을 업데이트하여 변경 사항 반영
                 updated = true;
                 break;
+            }
+        }
+
+        // loginUser 안에 저장된 친구 정보 업데이트
+        if (loginUser != null) {
+            Set<Friend> friends = loginUser.getFriends();
+            for (Friend friend : friends) {
+                if (friend.getLoginID().equals(loginID)) {
+                    friend.setInformation(newStatus);
+                    System.out.println("[개발용] : loginUser의 친구 상태 메시지 업데이트: " + loginID);
+                    break;
+                }
             }
         }
 
