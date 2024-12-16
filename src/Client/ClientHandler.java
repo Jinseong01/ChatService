@@ -5,6 +5,7 @@ import Model.User;
 import javax.swing.*;
 import java.io.*;
 import java.net.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class ClientHandler {
@@ -61,6 +62,13 @@ public class ClientHandler {
         }
     }
 
+    public void sendChatMessage(String chatRoomId, String message) {
+        String time = new SimpleDateFormat("HH:mm").format(new Date());
+        // 형식: /chat chatRoomId senderLoginID time message
+        String command = "/chat " + chatRoomId + " " + loginUser.getLoginID() + " " + time + " " + message;
+        sendMessage(command);
+    }
+
     // 이모티콘 전송 요청
     public void sendEmoji(String chatRoomId, String emojiFileName) {
         if (chatRoomId == null || emojiFileName == null || emojiFileName.isEmpty()) {
@@ -72,7 +80,8 @@ public class ClientHandler {
         }
 
         // 서버로 전송
-        String command = "/sendemoji " + chatRoomId + " " + loginUser.getLoginID() + " " + emojiFileName;
+        String time = new SimpleDateFormat("HH:mm").format(new Date());
+        String command = "/sendemoji " + chatRoomId + " " + loginUser.getLoginID() + " " + time + " " + emojiFileName;
         System.out.println("[개발용] : 전송 명령어: " + command); // 디버깅 출력
 
         // 정확히 한 줄만 전송
@@ -104,7 +113,8 @@ public class ClientHandler {
 
         try {
             // 서버에 이미지 전송 명령어
-            String command = "/sendimage " + chatRoomId + " " + loginUser.getLoginID() + " " + imageFile.getAbsolutePath();
+            String time = new SimpleDateFormat("HH:mm").format(new Date());
+            String command = "/sendimage " + chatRoomId + " " + loginUser.getLoginID() + " " + time + " " + imageFile.getAbsolutePath();
             out.println(command);
             System.out.println("전송 명령어: " + command);
         } catch (Exception e) {
@@ -134,8 +144,8 @@ public class ClientHandler {
                             cw.handleChatHistoryEnd();
                         }
                     } else if (msg.startsWith("/chat ")) {
-                        String[] tokens = msg.split(" ", 4);
-                        if (tokens.length == 4) {
+                        String[] tokens = msg.split(" ", 5);
+                        if (tokens.length == 5) {
                             String chatRoomId = tokens[1];
                             ChatWindow cw = chatWindows.get(chatRoomId);
                             if (cw != null) {
@@ -145,32 +155,34 @@ public class ClientHandler {
                             System.out.println("수신된 /chat 명령어의 형식이 잘못되었습니다: " + msg);
                         }
                     } else if (msg.startsWith("/sendemoji ")) {
-                        String[] tokens = msg.split(" ", 4);
-                        if (tokens.length == 4) {
+                        String[] tokens = msg.split(" ", 5);
+                        if (tokens.length == 5) {
                             String chatRoomId = tokens[1];
                             String senderLoginID = tokens[2];
-                            String emojiFilePath = tokens[3];
+                            String time = tokens[3];
+                            String emojiFilePath = tokens[4];
 
                             SwingUtilities.invokeLater(() -> {
                                 ChatWindow cw = chatWindows.get(chatRoomId);
                                 if (cw != null) {
-                                    cw.appendEmoji(senderLoginID, emojiFilePath);
+                                    cw.appendEmoji(senderLoginID, time, emojiFilePath);
                                 }
                             });
                         } else {
                             System.out.println("수신된 /sendemoji 명령어의 형식이 잘못되었습니다: " + msg);
                         }
                     } else if (msg.startsWith("/sendimage")) {
-                        String[] tokens = msg.split(" ", 4);
-                        if (tokens.length == 4) {
+                        String[] tokens = msg.split(" ", 5);
+                        if (tokens.length == 5) {
                             String chatRoomId = tokens[1];
                             String senderLoginID = tokens[2];
-                            String imagePath = tokens[3];
+                            String time = tokens[3];
+                            String imagePath = tokens[4];
 
                             SwingUtilities.invokeLater(() -> {
                                 ChatWindow cw = chatWindows.get(chatRoomId); // 현재 채팅방 가져오기
                                 if (cw != null) {
-                                    cw.appendImage(senderLoginID, imagePath);
+                                    cw.appendImage(senderLoginID, time, imagePath);
                                 }
                             });
                         } else {
@@ -218,19 +230,19 @@ public class ClientHandler {
             }
         }
 
-        private void handleEmojiMessage(String msg) {
-            String[] tokens = msg.split(" ", 4); // chatRoomId 추가
-            if (tokens.length == 4) {
-                String chatRoomId = tokens[1];  // 채팅방 ID
-                String senderLoginID = tokens[2];  // 보낸 사람의 ID
-                String emojiFileName = tokens[3]; // 이모티콘 파일 이름
-
-                ChatWindow cw = chatWindows.get(chatRoomId); // 특정 채팅창 가져오기
-                if (cw != null) {
-                    SwingUtilities.invokeLater(() -> cw.appendEmoji(senderLoginID, emojiFileName));
-                }
-            }
-        }
+//        private void handleEmojiMessage(String msg) {
+//            String[] tokens = msg.split(" ", 4); // chatRoomId 추가
+//            if (tokens.length == 4) {
+//                String chatRoomId = tokens[1];  // 채팅방 ID
+//                String senderLoginID = tokens[2];  // 보낸 사람의 ID
+//                String emojiFileName = tokens[3]; // 이모티콘 파일 이름
+//
+//                ChatWindow cw = chatWindows.get(chatRoomId); // 특정 채팅창 가져오기
+//                if (cw != null) {
+//                    SwingUtilities.invokeLater(() -> cw.appendEmoji(senderLoginID, emojiFileName));
+//                }
+//            }
+//        }
 
         private void handleLoginResponse(String msg) {
             String[] tokens = msg.split(" ", 8);

@@ -328,15 +328,17 @@ public class UserHandler extends Thread {
 
     // 채팅 메시지 처리
     private void handleChat(String msg) {
-        // 형식: /chat chatRoomId senderLoginID message
-        String[] tokens = msg.split(" ", 4);
-        if (tokens.length != 4) {
+        // 형식: /chat chatRoomId sender time message
+        String[] tokens = msg.split(" ", 5);
+        if (tokens.length != 5) {
             out.println("/chat fail 잘못된 형식입니다.");
             return;
         }
         String chatRoomId = tokens[1];
         String sender = tokens[2];
-        String message = tokens[3];
+        String time = tokens[3];
+        String message = tokens[4];
+
         if (!ServerApp.chatRooms.containsKey(chatRoomId)) {
             out.println("/chat fail 존재하지 않는 채팅방입니다.");
             return;
@@ -347,7 +349,9 @@ public class UserHandler extends Thread {
             out.println("/chat fail 발신자가 멤버가 아닙니다.");
             return;
         }
-        String formattedMessage = "/chat " + chatRoomId + " " + sender + " " + message;
+
+        // 시간 포함한 메시지 저장 및 브로드캐스트
+        String formattedMessage = "/chat " + chatRoomId + " " + sender + " " + time + " " + message;
         chatRoom.addMessage(formattedMessage);
         for (User member : chatRoom.getMembers()) {
             if (ServerApp.onlineUsers.containsKey(member.getLoginID())) {
@@ -358,10 +362,8 @@ public class UserHandler extends Thread {
 
     private void handleSendImage(String msg) {
         System.out.println("수신한 sendimage 명령어: [" + msg + "]");
-
-        // 명령어 파싱
-        String[] tokens = msg.split(" ", 4);
-        if (tokens.length != 4) {
+        String[] tokens = msg.split(" ", 5);
+        if (tokens.length != 5) {
             System.out.println("sendimage 명령어 파싱 실패: 잘못된 형식");
             out.println("/sendimage fail 잘못된 형식입니다.");
             return;
@@ -369,13 +371,14 @@ public class UserHandler extends Thread {
 
         String chatRoomId = tokens[1];
         String sender = tokens[2];
-        String imagePath = tokens[3];
+        String time = tokens[3];
+        String imagePath = tokens[4];
 
         System.out.println("파싱된 chatRoomId: " + chatRoomId);
         System.out.println("파싱된 sender: " + sender);
+        System.out.println("파싱된 time: " + time);
         System.out.println("파싱된 imagePath: " + imagePath);
 
-        // 채팅방 존재 여부 확인
         if (!ServerApp.chatRooms.containsKey(chatRoomId)) {
             System.out.println("sendimage 실패: 존재하지 않는 채팅방 [" + chatRoomId + "]");
             out.println("/sendimage fail 존재하지 않는 채팅방입니다.");
@@ -384,7 +387,6 @@ public class UserHandler extends Thread {
 
         ChatRoom chatRoom = ServerApp.chatRooms.get(chatRoomId);
 
-        // 사용자가 채팅방 멤버인지 확인
         boolean isMember = chatRoom.getMembers().stream().anyMatch(u -> u.getLoginID().equals(sender));
         if (!isMember) {
             System.out.println("sendimage 실패: 사용자가 채팅방 멤버가 아님 [" + sender + "]");
@@ -392,8 +394,7 @@ public class UserHandler extends Thread {
             return;
         }
 
-        // 이미지 메시지 생성 및 브로드캐스트
-        String formattedMessage = "/sendimage " + chatRoomId + " " + sender + " " + imagePath;
+        String formattedMessage = "/sendimage " + chatRoomId + " " + sender + " " + time + " " + imagePath;
         chatRoom.addMessage(formattedMessage);
 
         for (User member : chatRoom.getMembers()) {
@@ -407,10 +408,8 @@ public class UserHandler extends Thread {
 
     private void handleSendEmoji(String msg) {
         System.out.println("[개발용] : 수신한 sendemoji 명령어: [" + msg + "]");
-
-        // 메시지를 공백으로 분리
-        String[] tokens = msg.split(" ", 4);
-        if (tokens.length != 4) {
+        String[] tokens = msg.split(" ", 5);
+        if (tokens.length != 5) {
             System.out.println("[개발용] : sendemoji 명령어 파싱 실패: 잘못된 형식");
             out.println("/sendemoji fail 잘못된 형식입니다.");
             return;
@@ -418,13 +417,14 @@ public class UserHandler extends Thread {
 
         String chatRoomId = tokens[1];
         String sender = tokens[2];
-        String emojiFileName = tokens[3];
+        String time = tokens[3];
+        String emojiFileName = tokens[4];
 
         System.out.println("[개발용] : 파싱된 chatRoomId: " + chatRoomId);
         System.out.println("[개발용] : 파싱된 sender: " + sender);
+        System.out.println("[개발용] : 파싱된 time: " + time);
         System.out.println("[개발용] : 파싱된 emojiFileName: " + emojiFileName);
 
-        // 채팅방 존재 여부 확인
         if (!ServerApp.chatRooms.containsKey(chatRoomId)) {
             System.out.println("[개발용] : sendemoji 실패: 존재하지 않는 채팅방 [" + chatRoomId + "]");
             out.println("/sendemoji fail 존재하지 않는 채팅방입니다.");
@@ -433,7 +433,6 @@ public class UserHandler extends Thread {
 
         ChatRoom chatRoom = ServerApp.chatRooms.get(chatRoomId);
 
-        // 사용자가 채팅방 멤버인지 확인
         boolean isMember = chatRoom.getMembers().stream().anyMatch(u -> u.getLoginID().equals(sender));
         if (!isMember) {
             System.out.println("[개발용] : sendemoji 실패: 사용자가 채팅방 멤버가 아님 [" + sender + "]");
@@ -441,7 +440,6 @@ public class UserHandler extends Thread {
             return;
         }
 
-        // 이모티콘 파일 경로 설정
         String emojiFilePath = "src/Resources/emojis/" + emojiFileName;
         File emojiFile = new File(emojiFilePath);
         if (!emojiFile.exists()) {
@@ -450,8 +448,7 @@ public class UserHandler extends Thread {
             return;
         }
 
-        // 이모티콘 메시지 생성 및 브로드캐스트
-        String formattedMessage = "/sendemoji " + chatRoomId + " " + sender + " " + emojiFilePath;
+        String formattedMessage = "/sendemoji " + chatRoomId + " " + sender + " " + time + " " + emojiFilePath;
         chatRoom.addMessage(formattedMessage);
 
         for (User member : chatRoom.getMembers()) {

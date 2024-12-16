@@ -71,7 +71,8 @@ public class ChatWindow extends JFrame {
     private void sendMessage() {
         String message = inputField.getText().trim();
         if (message.isEmpty()) return;
-        handler.sendMessage("/chat " + chatRoomId + " " + loginID + " " + message);
+        // 시간 포함하여 전송하는 메서드 호출
+        handler.sendChatMessage(chatRoomId, message);
         inputField.setText("");
     }
 
@@ -79,22 +80,24 @@ public class ChatWindow extends JFrame {
         System.out.println("[개발용] : 수신된 메시지: " + msg);
 
         if (msg.startsWith("[이모티콘] ")) {
-            String[] tokens = msg.split(" ", 3);
-            if (tokens.length == 3) {
+            String[] tokens = msg.split(" ", 4);
+            if (tokens.length == 4) {
                 String senderLoginID = tokens[1]; // 보낸 사람의 ID
-                String emojiFileName = tokens[2]; // 이모티콘 파일 이름
+                String time = tokens[2];
+                String emojiFileName = tokens[3]; // 이모티콘 파일 이름
                 System.out.println("[개발용] : 이모티콘 메시지로 인식됨: " + senderLoginID + ", 파일: " + emojiFileName);
-                appendEmoji(senderLoginID, emojiFileName); // 두 개의 매개변수 전달
+                appendEmoji(senderLoginID, time, emojiFileName); // 두 개의 매개변수 전달
             } else {
                 System.err.println("[개발용] : 이모티콘 메시지 형식이 잘못되었습니다.");
             }
         } else {
             // 일반 메시지 처리
-            String[] tokens = msg.split(" ", 4);
-            if (tokens.length == 4) {
+            String[] tokens = msg.split(" ", 5);
+            if (tokens.length == 5) {
                 String senderLoginID = tokens[2];
-                String message = tokens[3];
-                appendMessage(senderLoginID, message);
+                String time = tokens[3];
+                String message = tokens[4];
+                appendMessage(senderLoginID, time, message);
             } else {
                 System.err.println("일반 메시지 형식이 잘못되었습니다: " + msg);
             }
@@ -109,21 +112,22 @@ public class ChatWindow extends JFrame {
     public void handleChatHistoryEnd() {
         receivingHistory = false;
         for (String chat : tempChatHistory) {
-            String[] tokens = chat.split(" ", 4);
-            if (tokens.length == 4) {
-                appendMessage(tokens[2], tokens[3]);
+            String[] tokens = chat.split(" ", 5);
+            if (tokens.length == 5) {
+                appendMessage(tokens[2], tokens[3], tokens[4]);
             }
         }
         tempChatHistory.clear();
     }
 
-    private void appendToChat(String content, String alignment, String senderStyle) {
+    private void appendToChat(String time, String content, String alignment, String senderStyle) {
         SwingUtilities.invokeLater(() -> {
             htmlContent.append("<div style='text-align: ")
                     .append(alignment)
                     .append(";'><b>")
                     .append(senderStyle)
                     .append("</b>:<br>")
+                    .append(time)
                     .append(content)
                     .append("</div>");
             chatArea.setText(htmlContent.toString());
@@ -131,13 +135,16 @@ public class ChatWindow extends JFrame {
         });
     }
 
-    private void appendMessage(String senderLoginID, String message) {
+    private void appendMessage(String senderLoginID, String time, String message) {
         String alignment = senderLoginID.equals(loginID) ? "right" : "left";
         String senderStyle = senderLoginID.equals(loginID) ? "나" : senderLoginID;
-        appendToChat(message, alignment, senderStyle);
+        appendToChat(time, message, alignment, senderStyle);
     }
 
-    protected void appendImage(String senderLoginID, String imagePath) {
+    protected void appendImage(String senderLoginID, String time, String imagePath) {
+        System.out.println("[개발용] : appendImage 호출됨: senderLoginID=" + senderLoginID + ", imagePath=" + imagePath);
+        String os = System.getProperty("os.name").toLowerCase();
+        System.out.println("[개발용] : 클라이언트 OS : " + os);
         File imageFile = new File(imagePath);
 
         if (!imageFile.exists()) {
@@ -146,11 +153,19 @@ public class ChatWindow extends JFrame {
         }
 
         try {
-            String imgTag = "<img src='file://" + imageFile.getAbsolutePath().replace("\\", "/") + "' width='128' height='128'>";
+            String imgTag = null;
+
+            if (os.contains("win")) {
+                // Windows일 경우
+                imgTag = "<img src='file:\\" + imageFile.getAbsolutePath() + "' width='128' height='128'>";
+            }
+            else {
+                imgTag = "<img src='file://" + imageFile.getAbsolutePath().replace("\\", "/") + "' width='128' height='128'>";
+            }
             String alignment = senderLoginID.equals(loginID) ? "right" : "left";
             String senderStyle = senderLoginID.equals(loginID) ? "나" : senderLoginID;
 
-            appendToChat(imgTag, alignment, senderStyle);
+            appendToChat(time, imgTag, alignment, senderStyle);
 
             System.out.println("이미지 추가 성공: " + imageFile.getAbsolutePath());
         } catch (Exception e) {
@@ -158,7 +173,7 @@ public class ChatWindow extends JFrame {
         }
     }
 
-    protected void appendEmoji(String senderLoginID, String emojiFileName) {
+    protected void appendEmoji(String senderLoginID, String time, String emojiFileName) {
         System.out.println("[개발용] : appendEmoji 호출됨: senderLoginID=" + senderLoginID + ", emojiFileName=" + emojiFileName);
         String os = System.getProperty("os.name").toLowerCase();
         System.out.println("[개발용] : 클라이언트 OS : " + os);
@@ -188,7 +203,7 @@ public class ChatWindow extends JFrame {
             String alignment = senderLoginID.equals(loginID) ? "right" : "left";
             String senderStyle = senderLoginID.equals(loginID) ? "나" : senderLoginID;
 
-            appendToChat(imgTag, alignment, senderStyle);
+            appendToChat(time, imgTag, alignment, senderStyle);
             System.out.println("[개발용] : 이모티콘 추가 성공: " + emojiFile.getAbsolutePath());
         } catch (Exception e) {
             System.err.println("[개발용] : 이모티콘 추가 중 오류 발생: " + e.getMessage());
