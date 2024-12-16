@@ -160,6 +160,8 @@ public class ChatWindow extends JFrame {
 
     protected void appendEmoji(String senderLoginID, String emojiFileName) {
         System.out.println("[개발용] : appendEmoji 호출됨: senderLoginID=" + senderLoginID + ", emojiFileName=" + emojiFileName);
+        String os = System.getProperty("os.name").toLowerCase();
+        System.out.println("[개발용] : 클라이언트 OS : " + os);
         String emojiPath = emojiFileName;
         File emojiFile = new File(emojiPath);
 
@@ -171,7 +173,16 @@ public class ChatWindow extends JFrame {
         }
 
         try {
-            String imgTag = "<img src='file://" + emojiFile.getAbsolutePath().replace("\\", "/") + "' width='64' height='64'>";
+            String imgTag = null;
+
+            // OS 구분해서 이미지 출력
+            if (os.contains("win")) {
+                // Windows일 경우
+                imgTag = "<img src='file:\\" + emojiFile.getAbsolutePath() + "' width='64' height='64'>";
+            }
+            else {
+                imgTag = "<img src='file://" + emojiFile.getAbsolutePath().replace("\\", "/") + "' width='64' height='64'>";
+            }
             System.out.println("[개발용] : 생성된 img 태그: " + imgTag);
 
             String alignment = senderLoginID.equals(loginID) ? "right" : "left";
