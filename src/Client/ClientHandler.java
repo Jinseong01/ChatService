@@ -209,6 +209,8 @@ public class ClientHandler {
                         }
                     } else if (msg.startsWith("/login")) {
                         handleLoginResponse(msg);
+                    } else if (msg.startsWith("/checkonline")) {
+                        handleCheckOnlineResponse(msg);
                     } else if (msg.startsWith("/signup")) {
                         handleSignupResponse(msg);
                     } else if (msg.startsWith("/error")) {
@@ -295,6 +297,29 @@ public class ClientHandler {
 //                }
 //            }
 //        }
+
+        private void handleCheckOnlineResponse(String msg) {
+            String[] tokens = msg.split(" ");
+            if (tokens.length < 2) {
+                JOptionPane.showMessageDialog(ui.getFrame(), "응답 메시지 형식 오류: " + msg);
+                return;
+            }
+
+            String chatRoomName = tokens[1];
+            List<String> onlineFriends = tokens.length > 2
+                    ? Arrays.asList(tokens).subList(2, tokens.length)
+                    : Collections.emptyList();
+
+            if (!onlineFriends.isEmpty()) {
+                StringBuilder sb = new StringBuilder("/createchat " + chatRoomName);
+                for (String friend : onlineFriends) {
+                    sb.append(" ").append(friend);
+                }
+                ClientHandler.this.sendMessage(sb.toString()); // ClientHandler의 sendMessage 메서드 호출
+            } else {
+                JOptionPane.showMessageDialog(ui.getFrame(), "선택된 친구 중 접속 중인 사용자가 없습니다.");
+            }
+        }
 
         private void handleLoginResponse(String msg) {
             String[] tokens = msg.split(" ", 9);

@@ -50,6 +50,8 @@ public class UserHandler extends Thread {
                     handleLogin(msg);
                 } else if (msg.startsWith("/addfriend")) {
                     handleAddFriend(msg);
+                } else if (msg.startsWith("/checkonline")) {
+                    handleCheckOnline(msg);
                 } else if (msg.startsWith("/acceptfriend")) {
                     handleAcceptFriend(msg);
                 } else if (msg.startsWith("/rejectfriend")) {
@@ -237,6 +239,32 @@ public class UserHandler extends Thread {
             // 메모 목록 동기화
             handleGetMemos("/getmemos " + loginID);
         }
+    }
+
+    private void handleCheckOnline(String msg) {
+        String[] tokens = msg.split(" ");
+        if (tokens.length < 3) { // chatRoomName + 최소 1명의 친구 필요
+            out.println("/checkonline_fail 잘못된 형식입니다.");
+            return;
+        }
+
+        String chatRoomName = tokens[1];
+        List<String> friendsToCheck = Arrays.asList(tokens).subList(2, tokens.length);
+        List<String> onlineFriends = new ArrayList<>();
+
+        for (String friend : friendsToCheck) {
+            if (ServerApp.onlineUsers.containsKey(friend)) {
+                onlineFriends.add(friend);
+            }
+        }
+
+        StringBuilder response = new StringBuilder("/checkonline_success " + chatRoomName);
+        if (!onlineFriends.isEmpty()) {
+            for (String onlineFriend : onlineFriends) {
+                response.append(" ").append(onlineFriend);
+            }
+        }
+        out.println(response.toString()); // 항상 chatRoomName 포함
     }
 
     // 친구 목록 전송 처리
