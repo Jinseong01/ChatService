@@ -27,6 +27,9 @@ public class ChatPanel extends JPanel {
         // 채팅방 목록 패널
         JPanel chatRoomsPanel = new JPanel(new BorderLayout());
         chatRoomsPanel.setBorder(BorderFactory.createTitledBorder("채팅방 목록"));
+
+        // Custom Renderer 설정
+        chatRoomsListUI.setCellRenderer(new ChatRoomCellRenderer());
         chatRoomsPanel.add(new JScrollPane(chatRoomsListUI), BorderLayout.CENTER);
 
         // 전체 구성
@@ -45,5 +48,27 @@ public class ChatPanel extends JPanel {
 
     public JButton getCreateChatButton() {
         return createChatButton;
+    }
+
+    // Custom Cell Renderer 클래스
+    private static class ChatRoomCellRenderer extends DefaultListCellRenderer {
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+            // 채팅방 이름 추출
+            String chatRoomName = value.toString();
+
+            // 스타일 변경
+            label.setText(chatRoomName); // 이름만 표시
+            label.setFont(new Font("SansSerif", Font.PLAIN, 16)); // 폰트 크기 설정
+            label.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createEmptyBorder(10, 10, 10, 10), // 패딩 추가
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY) // 경계선 추가
+            ));
+            label.setOpaque(true); // 배경색 활성화
+            label.setBackground(isSelected ? new Color(220, 240, 255) : Color.WHITE); // 선택된 항목 배경색
+            return label;
+        }
     }
 }
