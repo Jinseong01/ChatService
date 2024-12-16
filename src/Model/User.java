@@ -13,7 +13,7 @@ public class User {
     private String nickname;      // 닉네임
     private String information;   // 상태 메시지
     private String profileImage;  // 프로필 이미지
-    private Set<String> friends;  // 친구 목록
+    private Set<Friend> friends;  // 친구 목록
     private List<String> memos;   // 메모 목록
 
     public User(String loginID, String loginPW, String userName, String birthday, String nickname, String information) {
@@ -52,7 +52,7 @@ public class User {
         return information;
     }
 
-    public Set<String> getFriends() {
+    public Set<Friend> getFriends() {
         return friends;
     }
 
@@ -72,14 +72,18 @@ public class User {
         this.profileImage = profileImage;
     }
 
+    public void setFriends(Set<Friend> friends) {
+        this.friends = friends;
+    }
+
     // 친구 추가
-    public boolean addFriend(String friendLoginID) {
-        return friends.add(friendLoginID);
+    public boolean addFriend(Friend newFriend) {
+        return friends.add(newFriend);
     }
 
     // 친구 제거
-    public boolean removeFriend(String friendLoginID) {
-        return friends.remove(friendLoginID);
+    public boolean removeFriend(Friend oldFriend) {
+        return friends.remove(oldFriend);
     }
 
     // 메모 추가
@@ -114,7 +118,6 @@ public class User {
                 "  birthday='" + birthday + "',\n" +
                 "  nickname='" + nickname + "',\n" +
                 "  information='" + information + "',\n" +
-                "  profileImage ='" + profileImage + "',\n" +
                 "  friends=" + friends + ",\n" +
                 "  memos=" + memos + "\n" +
                 "}";

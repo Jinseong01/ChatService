@@ -31,15 +31,17 @@ public class ServerApp {
     static {
         // test 계정에 기본 친구 추가 (tmp1, tmp2)
         User testUser = userCredentials.get("test");
-        testUser.getFriends().add("tmp1");
-        testUser.getFriends().add("tmp2");
+//        testUser.getFriends().add("tmp1");
+//        testUser.getFriends().add("tmp2");
         friendRequests.put("test", ConcurrentHashMap.newKeySet());
 
         User testUser2 = userCredentials.get("tmp1");
-        testUser2.getFriends().add("test");
+//        testUser2.getFriends().add("test");
+        friendRequests.put("tmp1", ConcurrentHashMap.newKeySet());
 
         User testUser3 = userCredentials.get("tmp2");
-        testUser3.getFriends().add("test");
+//        testUser3.getFriends().add("test");
+        friendRequests.put("tmp2", ConcurrentHashMap.newKeySet());
 
         // test 계정에 기본 메모 추가
         testUser.getMemos().add("기본 메모 1");

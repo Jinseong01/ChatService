@@ -1,5 +1,6 @@
 package Client;
 
+import Model.Friend;
 import Model.User;
 
 import javax.swing.*;
@@ -243,37 +244,10 @@ public class ClientHandler {
                         handleDeleteMemoResponse(msg);
                     }
                     else if (msg.startsWith("/profileimageupdate ")) {
-                        String[] tokens = msg.split(" ", 2);
-                        if (tokens.length == 2) {
-                            String newBase64Image = tokens[1];
-                            if (loginUser != null) {
-                                loginUser.setProfileImage(newBase64Image);
-
-                                // UI에 반영
-                                SwingUtilities.invokeLater(() -> {
-                                    ui.handleLoginSuccess(loginUser);
-                                    // 또는 ui 내에 프로필 업데이트만 하는 메서드를 호출해도 됨.
-                                });
-                            }
-                        } else {
-                            System.out.println("수신된 /profileimageupdate 명령어의 형식이 잘못되었습니다: " + msg);
-                        }
+                        handleProfileImageUpdate(msg);
                     }
                     else if (msg.startsWith("/statusupdate ")) {
-                        String[] tokens = msg.split(" ", 2);
-                        if (tokens.length == 2) {
-                            String newStatus = tokens[1];
-                            if (loginUser != null) {
-                                loginUser.setInformation(newStatus);
-                                // UI에 반영
-                                SwingUtilities.invokeLater(() -> {
-                                    ui.handleLoginSuccess(loginUser);
-                                    // 또는 ui 내에 프로필 업데이트만 하는 메서드를 호출해도 됨.
-                                });
-                            }
-                        } else {
-                            System.out.println("수신된 /statusupdate 명령어 형식 잘못됨: " + msg);
-                        }
+                        handleStatusUpdate(msg);
                     }
                 }
             } catch (IOException e) {
@@ -376,48 +350,81 @@ public class ClientHandler {
         }
 
         private void handleFriendsList(String msg) {
-            // 형식: /friends friend1 friend2 friend3 ...
+            // 형식: /friends loginID|userName|info|profileImage ...
             String[] tokens = msg.split(" ");
-            if (loginUser != null) {
-                for (int i = 1; i < tokens.length; i++) {
-                    loginUser.addFriend(tokens[i]);
+            if (tokens.length < 2) return;
+
+            Set<Friend> friends = new HashSet<>();
+            for (int i = 1; i < tokens.length; i++) {
+                String[] friendData = tokens[i].split("\\|");
+                if (friendData.length == 4) {
+                    String loginID = friendData[0];
+                    String userName = friendData[1].replace("_", " ");
+                    String info = friendData[2].replace("_", " ");
+                    String profileImage = friendData[3];
+                    friends.add(new Friend(loginID, userName, info, profileImage));
                 }
+            }
+
+            if (loginUser != null) {
+                loginUser.setFriends(friends);
                 SwingUtilities.invokeLater(() -> {
-                    ui.updateFriendsList(new ArrayList<>(loginUser.getFriends()));
+                    ui.updateFriendsList(new ArrayList<>(friends));
                 });
             }
-            System.out.println("[개발용] 클라이언트 " + loginUser.getLoginID() + "의 친구 목록 : " + loginUser.getFriends());
+            System.out.println("[개발용] : " + loginUser.getLoginID() + "의 친구 목록 업데이트 완료: " + friends);
         }
 
         private void handleFriendRequest(String msg) {
+            // 형식: /friendrequest loginID|userName|info|profileImage
             String[] tokens = msg.split(" ", 2);
             if (tokens.length != 2) return;
-            String requesterLoginID = tokens[1];
-            SwingUtilities.invokeLater(() -> {
-                ui.addFriendRequest(requesterLoginID);
-            });
+
+            String[] friendData = tokens[1].split("\\|");
+            if (friendData.length == 4) {
+                String loginID = friendData[0];
+                String userName = friendData[1].replace("_", " ");
+                String info = friendData[2].replace("_", " ");
+                String profileImage = friendData[3];
+
+                Friend requester = new Friend(loginID, userName, info, profileImage);
+                SwingUtilities.invokeLater(() -> {
+                    ui.addFriendRequest(requester);
+                });
+            }
         }
 
         private void handleFriendAccepted(String msg) {
-            // 형식: /friendaccepted accepterLoginID
+            // 형식: /friendaccepted loginID|userName|info|profileImage
             String[] tokens = msg.split(" ", 2);
             if (tokens.length != 2) return;
-            String accepterLoginID = tokens[1];
-            if (loginUser != null) {
-                loginUser.addFriend(accepterLoginID);
-                SwingUtilities.invokeLater(() -> {
-                    ui.updateFriendsList(new ArrayList<>(loginUser.getFriends()));
-                    JOptionPane.showMessageDialog(ui.getFrame(), accepterLoginID + "님이 친구 요청을 수락했습니다.");
-                });
+
+            String[] friendData = tokens[1].split("\\|");
+            if (friendData.length == 4) {
+                String loginID = friendData[0];
+                String userName = friendData[1].replace("_", " ");
+                String info = friendData[2].replace("_", " ");
+                String profileImage = friendData[3];
+
+                Friend newFriend = new Friend(loginID, userName, info, profileImage);
+                if (loginUser != null) {
+                    loginUser.addFriend(newFriend);
+                    SwingUtilities.invokeLater(() -> {
+                        ui.updateFriendsList(new ArrayList<>(loginUser.getFriends()));
+                        JOptionPane.showMessageDialog(ui.getFrame(), userName + "님이 친구 요청을 수락했습니다.");
+                    });
+                }
             }
         }
 
         private void handleFriendRejected(String msg) {
+            // 형식: /friendrejected loginID
             String[] tokens = msg.split(" ", 2);
             if (tokens.length != 2) return;
-            String rejecterLoginID = tokens[1];
+
+            String rejectedLoginID = tokens[1];
             SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(ui.getFrame(), rejecterLoginID + "님이 친구 요청을 거절했습니다.");
+                JOptionPane.showMessageDialog(ui.getFrame(), rejectedLoginID + "님이 친구 요청을 거절했습니다.");
             });
         }
 
@@ -510,6 +517,48 @@ public class ClientHandler {
             } else {
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(ui.getFrame(), "메모 삭제 실패.");
+                });
+            }
+        }
+
+        private void handleProfileImageUpdate(String msg) {
+            String[] tokens = msg.split(" ", 3);
+            if (tokens.length == 3) {
+                String updatedLoginID = tokens[1];
+                String newProfileImage = tokens[2];
+
+                SwingUtilities.invokeLater(() -> {
+                    if (loginUser != null && updatedLoginID.equals(loginUser.getLoginID())) {
+                        // 자신의 프로필 이미지 업데이트
+                        ui.updateOwnProfileImage(newProfileImage);
+                    } else {
+                        // 친구 목록 업데이트
+                        ui.updateFriendProfileImage(updatedLoginID, newProfileImage);
+
+                        // 친구 요청 목록 업데이트
+                        ui.updateFriendRequestProfileImage(updatedLoginID, newProfileImage);
+                    }
+                });
+            }
+        }
+
+        private void handleStatusUpdate(String msg) {
+            String[] tokens = msg.split(" ", 3);
+            if (tokens.length == 3) {
+                String updatedLoginID = tokens[1];
+                String newStatus = tokens[2];
+
+                SwingUtilities.invokeLater(() -> {
+                    if (loginUser != null && updatedLoginID.equals(loginUser.getLoginID())) {
+                        // 자신의 상태 메시지 업데이트
+                        ui.updateOwnStatusMessage(newStatus);
+                    } else {
+                        // 친구 목록 업데이트
+                        ui.updateFriendStatus(updatedLoginID, newStatus);
+
+                        // 친구 요청 목록 업데이트
+                        ui.updateFriendRequestStatus(updatedLoginID, newStatus);
+                    }
                 });
             }
         }

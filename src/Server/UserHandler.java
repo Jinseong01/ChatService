@@ -1,6 +1,7 @@
 package Server;
 
 import Model.ChatRoom;
+import Model.Friend;
 import Model.User;
 import java.io.*;
 import java.net.Socket;
@@ -39,7 +40,7 @@ public class UserHandler extends Thread {
             while ((msg = in.readLine()) != null) {
                 msg = msg.trim(); // 공백 제거
                 if (msg.isEmpty()) { // 빈 메시지 무시
-                    System.out.println("[빈 메시지 수신] : 오류로 인해 처리하지 않음");
+                    System.out.println("[빈 메시지 수신] : 처리하지 않음");
                     continue;
                 }
                 System.out.println("[수신] : " + msg);
@@ -101,6 +102,18 @@ public class UserHandler extends Thread {
         }
     }
 
+    // 헬퍼 메서드: 사용자의 친구 목록에서 loginID를 가진 Friend가 있는지 확인
+    private boolean hasFriend(User u, String friendLoginID) {
+        for (Friend f : u.getFriends()) {
+            if (f.getLoginID().equals(friendLoginID)) return true;
+        }
+        return false;
+    }
+
+    private Friend friendFromUser(User u) {
+        return new Friend(u.getLoginID(), u.getUserName(), u.getInformation(), u.getProfileImage());
+    }
+
     private void handleUpdateStatus(String msg) {
         String[] tokens = msg.split(" ", 3);
         if (tokens.length != 3) {
@@ -111,21 +124,39 @@ public class UserHandler extends Thread {
         String targetLoginID = tokens[1];
         String newStatus = tokens[2];
 
-        // 현재 로그인한 사용자만 자신의 상태메시지를 수정할 수 있다고 가정
         if (!targetLoginID.equals(loginID)) {
             out.println("/error 다른 사용자의 상태메시지는 수정할 수 없습니다.");
             return;
         }
 
-        // user 객체에 상태 메시지 설정
+        // 상태 메시지 업데이트
         user.setInformation(newStatus);
 
-        // 변경 성공 메시지 전송
+        // 변경된 상태 메시지를 현재 사용자에게 전송
         out.println("/updatestatus success");
         System.out.println("[개발용] : " + loginID + "의 상태메시지 변경 성공: " + newStatus);
+        out.println("/statusupdate " + loginID + " " + newStatus);
 
-        // 변경된 상태 메시지를 해당 사용자에게 다시 전송하여 UI 반영
-        out.println("/statusupdate " + newStatus);
+        // 친구들에게 상태 업데이트 전송
+        notifyFriendsAboutStatusChange(newStatus);
+    }
+
+    private void notifyFriendsAboutStatusChange(String newStatus) {
+        // 1. 친구들에게 변경 사항 알림
+        for (Friend friend : user.getFriends()) {
+            if (ServerApp.onlineUsers.containsKey(friend.getLoginID())) {
+                ServerApp.onlineUsers.get(friend.getLoginID()).sendMessage("/statusupdate " + loginID + " " + newStatus);
+            }
+        }
+
+        // 2. 자신을 친구 요청 목록에 보유한 사용자들에게도 변경 사항 알림
+        for (Map.Entry<String, Set<String>> entry : ServerApp.friendRequests.entrySet()) {
+            String targetUserLoginID = entry.getKey();
+            Set<String> requesters = entry.getValue();
+            if (requesters.contains(loginID) && ServerApp.onlineUsers.containsKey(targetUserLoginID)) {
+                ServerApp.onlineUsers.get(targetUserLoginID).sendMessage("/statusupdate " + loginID + " " + newStatus);
+            }
+        }
     }
 
     private void handleUpdateProfileImage(String msg) {
@@ -138,23 +169,41 @@ public class UserHandler extends Thread {
         String targetLoginID = tokens[1];
         String base64Image = tokens[2];
 
-        // 현재 로그인한 사용자만 자신의 프로필을 수정할 수 있다고 가정
         if (!targetLoginID.equals(loginID)) {
             out.println("/error 다른 사용자의 프로필은 수정할 수 없습니다.");
             return;
         }
 
-        // user 객체에 프로필 이미지 설정
+        // 프로필 이미지 업데이트
         user.setProfileImage(base64Image);
-
-        // 변경 성공 메시지 전송
         System.out.println("[개발용] : " + loginID + "의 프로필 이미지 변경 성공");
-        out.println("/profileimageupdate " + base64Image);
+
+        // 변경된 프로필 이미지를 현재 사용자에게 전송
+        out.println("/profileimageupdate " + loginID + " " + base64Image);
+
+        // 친구들에게 프로필 이미지 업데이트 전송
+        notifyFriendsAboutProfileImageChange(base64Image);
     }
 
-    // 회원가입 처리
+    private void notifyFriendsAboutProfileImageChange(String base64Image) {
+        // 1. 친구들에게 변경 사항 알림
+        for (Friend friend : user.getFriends()) {
+            if (ServerApp.onlineUsers.containsKey(friend.getLoginID())) {
+                ServerApp.onlineUsers.get(friend.getLoginID()).sendMessage("/profileimageupdate " + loginID + " " + base64Image);
+            }
+        }
+
+        // 2. 자신을 친구 요청 목록에 보유한 사용자들에게도 변경 사항 알림
+        for (Map.Entry<String, Set<String>> entry : ServerApp.friendRequests.entrySet()) {
+            String targetUserLoginID = entry.getKey();
+            Set<String> requesters = entry.getValue();
+            if (requesters.contains(loginID) && ServerApp.onlineUsers.containsKey(targetUserLoginID)) {
+                ServerApp.onlineUsers.get(targetUserLoginID).sendMessage("/profileimageupdate " + loginID + " " + base64Image);
+            }
+        }
+    }
+
     private void handleSignup(String msg) {
-        // 형식: /signup loginID loginPW userName birthday nickname information
         String[] tokens = msg.split(" ", 7);
         if (tokens.length != 7) {
             out.println("/signup fail 잘못된 형식입니다.");
@@ -185,9 +234,7 @@ public class UserHandler extends Thread {
         }
     }
 
-    // 로그인 처리
     private void handleLogin(String msg) throws IOException {
-        // 형식: /login loginID loginPW
         String[] tokens = msg.split(" ", 3);
         if (tokens.length != 3) {
             out.println("/login fail 잘못된 형식입니다.");
@@ -209,18 +256,11 @@ public class UserHandler extends Thread {
 
             if(user.getProfileImage()==null) {
                 Path imagePath = Paths.get("src", "Resources", "images", "BasicProfile.jpg");
-
-                // 파일을 바이너리로 읽기
                 byte[] imageBytes = Files.readAllBytes(imagePath);
-
-                // Base64로 인코딩
                 String base64Image = Base64.getEncoder().encodeToString(imageBytes);
-
-                // user 객체에 설정
                 user.setProfileImage(base64Image);
             }
 
-            // 사용자 정보 포함하여 로그인 성공 메시지 전송
             String successMsg = String.format("/login success %s %s %s %s %s %s %s",
                     user.getLoginID(),
                     user.getLoginPW(),
@@ -234,9 +274,7 @@ public class UserHandler extends Thread {
 
             System.out.println("[개발용] : " + userLoginID + " 로그인 성공");
 
-            // 친구 목록 동기화
             handleGetFriends();
-            // 메모 목록 동기화
             handleGetMemos("/getmemos " + loginID);
         }
     }
@@ -269,18 +307,13 @@ public class UserHandler extends Thread {
 
     // 친구 목록 전송 처리
     private void handleGetFriends() {
-        Set<String> friends = user.getFriends();
-        StringBuilder sb = new StringBuilder("/friends");
-        for (String friend : friends) {
-            sb.append(" ").append(friend);
-        }
-        out.println(sb.toString());
+        Set<Friend> friends = user.getFriends();
+        // 직렬화하여 전송
+        out.println("/friends " + friendsListToString(friends));
         System.out.println("[개발용] : 서버 " + user.getLoginID() + " 친구 목록 : " + friends);
     }
 
-    // 친구 요청 처리
     private void handleAddFriend(String msg) {
-        // 형식: /addfriend friendLoginID
         String[] tokens = msg.split(" ", 2);
         if (tokens.length != 2) {
             out.println("/addfriend fail 잘못된 형식입니다.");
@@ -291,27 +324,44 @@ public class UserHandler extends Thread {
             out.println("/addfriend fail 존재하지 않는 사용자입니다.");
             return;
         }
-        if (user.getFriends().contains(friendLoginID)) {
+        if (hasFriend(user, friendLoginID)) {
             out.println("/addfriend fail 이미 친구입니다.");
             return;
         }
+
         Set<String> requests = ServerApp.friendRequests.get(friendLoginID);
+
         if (requests.contains(loginID)) {
             out.println("/addfriend fail 이미 친구 요청을 보냈습니다.");
             return;
         }
+
         requests.add(loginID);
-        // 실시간으로 친구 요청을 받는 사용자에게 전송
+        // 요청 보낸 사용자 정보를 Friend 객체로 생성
+        Friend requesterFriend = friendFromUser(user);
+
         if (ServerApp.onlineUsers.containsKey(friendLoginID)) {
-            ServerApp.onlineUsers.get(friendLoginID).sendMessage("/friendrequest " + loginID);
+            ServerApp.onlineUsers.get(friendLoginID).sendMessage("/friendrequest " + friendToString(requesterFriend));
         }
         out.println("/addfriend success 친구 요청을 보냈습니다.");
         System.out.println("[개발용] : " + loginID + "님이 " + friendLoginID + "님에게 친구 요청을 보냈습니다.");
     }
 
-    // 친구 요청 수락 처리
+    private String friendToString(Friend f) {
+        return f.getLoginID() + "|" + f.getUserName().replace(" ", "_") + "|"
+                + f.getInformation().replace(" ", "_") + "|"
+                + f.getProfileImage();
+    }
+
+    private String friendsListToString(Set<Friend> friendsList) {
+        List<String> serializedFriends = new ArrayList<>();
+        for (Friend friend : friendsList) {
+            serializedFriends.add(friendToString(friend));
+        }
+        return String.join(" ", serializedFriends);
+    }
+
     private void handleAcceptFriend(String msg) {
-        // 형식: /acceptfriend requesterLoginID
         String[] tokens = msg.split(" ", 2);
         if (tokens.length != 2) {
             out.println("/acceptfriend fail 잘못된 형식입니다.");
@@ -323,30 +373,32 @@ public class UserHandler extends Thread {
             out.println("/acceptfriend fail 친구 요청이 없습니다.");
             return;
         }
-        // 친구 요청 제거 및 친구 목록 추가
         requests.remove(requester);
-        user.addFriend(requester);
         User requesterUser = ServerApp.userCredentials.get(requester);
+
+        Friend requesterFriend = friendFromUser(requesterUser);
+        user.addFriend(requesterFriend);
+
         if (requesterUser != null) {
-            requesterUser.addFriend(loginID);
+            requesterUser.addFriend(friendFromUser(user));
         }
+
         out.println("/acceptfriend success 친구가 되었습니다.");
         System.out.println("[개발용] : " + loginID + "님과 " + requester + "님이 친구가 되었습니다.");
-        // 친구에게 알림 전송
+
         if (ServerApp.onlineUsers.containsKey(requester)) {
-            ServerApp.onlineUsers.get(requester).sendMessage("/friendaccepted " + loginID);
+            ServerApp.onlineUsers.get(requester).sendMessage("/friendaccepted " + friendsListToString(user.getFriends()));
             // 친구의 최신 친구 목록을 동기화
-            ServerApp.onlineUsers.get(requester).sendMessage("/friends " + String.join(" ", requesterUser.getFriends()));
+            ServerApp.onlineUsers.get(requester).sendMessage("/friends " + friendsListToString(requesterUser.getFriends()));
         }
+
         // 현재 사용자의 최신 친구 목록을 동기화
-        out.println("/friends " + String.join(" ", user.getFriends()));
+        out.println("/friends " + friendsListToString(user.getFriends()));
         System.out.println("[개발용] : 서버 "+ user.getLoginID() + "의 친구 목록 : " + user.getFriends());
         System.out.println("[개발용] : 서버 "+ requesterUser.getLoginID() + "의 친구 목록 : " + requesterUser.getFriends());
     }
 
-    // 친구 요청 거절 처리
     private void handleRejectFriend(String msg) {
-        // 형식: /rejectfriend requesterLoginID
         String[] tokens = msg.split(" ", 2);
         if (tokens.length != 2) {
             out.println("/rejectfriend fail 잘못된 형식입니다.");
@@ -358,19 +410,15 @@ public class UserHandler extends Thread {
             out.println("/rejectfriend fail 친구 요청이 없습니다.");
             return;
         }
-        // 친구 요청 제거
         requests.remove(requester);
         out.println("/rejectfriend success 친구 요청을 거절했습니다.");
         System.out.println("[개발용] : " + loginID + "님이 " + requester + "님의 친구 요청을 거절했습니다.");
-        // 친구 요청 보낸 사용자에게 알림
         if (ServerApp.onlineUsers.containsKey(requester)) {
             ServerApp.onlineUsers.get(requester).sendMessage("/friendrejected " + loginID);
         }
     }
 
-    // 채팅방 생성 처리
     private void handleCreateChat(String msg) {
-        // 형식: /createchat chatRoomName friend1 friend2 ...
         String[] tokens = msg.split(" ", 3);
         if (tokens.length < 3) {
             out.println("/createchat fail 잘못된 형식입니다.");
@@ -379,25 +427,26 @@ public class UserHandler extends Thread {
         String chatRoomName = tokens[1];
         Set<User> members = ConcurrentHashMap.newKeySet();
         members.add(user);
+
         String[] friends = tokens[2].split(" ");
-        for (String friend : friends) {
-            if (user.getFriends().contains(friend)) {
-                User f = ServerApp.userCredentials.get(friend);
-                if (f != null) {
-                    members.add(f);
-                } else {
-                    out.println("/createchat fail " + friend + "은(는) 존재하지 않는 사용자입니다.");
-                    return;
-                }
+        for (String friendLoginID : friends) {
+            // 친구인지 확인
+            if (!hasFriend(user, friendLoginID)) {
+                out.println("/createchat fail " + friendLoginID + "은(는) 친구가 아닙니다.");
+                return;
+            }
+            User f = ServerApp.userCredentials.get(friendLoginID);
+            if (f != null) {
+                members.add(f);
             } else {
-                out.println("/createchat fail " + friend + "은(는) 친구가 아닙니다.");
+                out.println("/createchat fail " + friendLoginID + "은(는) 존재하지 않는 사용자입니다.");
                 return;
             }
         }
+
         String chatRoomId = UUID.randomUUID().toString();
         ChatRoom chatRoom = new ChatRoom(chatRoomId, chatRoomName, members);
         ServerApp.chatRooms.put(chatRoomId, chatRoom);
-        // 채팅방 참여자에게 알림
         for (User member : members) {
             if (ServerApp.onlineUsers.containsKey(member.getLoginID())) {
                 ServerApp.onlineUsers.get(member.getLoginID()).sendMessage("/createchat " + chatRoomId + " " + chatRoomName);
@@ -406,9 +455,7 @@ public class UserHandler extends Thread {
         out.println("/createchat_success 채팅방이 생성되었습니다. ID: " + chatRoomId);
     }
 
-    // 채팅 기록 요청 처리
     private void handleGetChatHistory(String msg) {
-        // 형식: /getchathistory chatRoomId
         String[] tokens = msg.split(" ", 2);
         if (tokens.length != 2) {
             out.println("/getchathistory fail 잘못된 형식입니다.");
@@ -420,7 +467,6 @@ public class UserHandler extends Thread {
             return;
         }
         ChatRoom chatRoom = ServerApp.chatRooms.get(chatRoomId);
-        // 멤버 확인
         boolean isMember = chatRoom.getMembers().stream().anyMatch(u -> u.getLoginID().equals(loginID));
         if (!isMember) {
             out.println("/getchathistory fail 채팅방에 참여하고 있지 않습니다.");
@@ -434,9 +480,7 @@ public class UserHandler extends Thread {
         out.println("/chathistoryend " + chatRoomId);
     }
 
-    // 채팅 메시지 처리
     private void handleChat(String msg) {
-        // 형식: /chat chatRoomId sender time message
         String[] tokens = msg.split(" ", 5);
         if (tokens.length != 5) {
             out.println("/chat fail 잘못된 형식입니다.");
@@ -458,7 +502,6 @@ public class UserHandler extends Thread {
             return;
         }
 
-        // 시간 포함한 메시지 저장 및 브로드캐스트
         String formattedMessage = "/chat " + chatRoomId + " " + sender + " " + time + " " + message;
         chatRoom.addMessage(formattedMessage);
         for (User member : chatRoom.getMembers()) {
@@ -482,22 +525,14 @@ public class UserHandler extends Thread {
         String time = tokens[3];
         String imagePath = tokens[4];
 
-        System.out.println("파싱된 chatRoomId: " + chatRoomId);
-        System.out.println("파싱된 sender: " + sender);
-        System.out.println("파싱된 time: " + time);
-        System.out.println("파싱된 imagePath: " + imagePath);
-
         if (!ServerApp.chatRooms.containsKey(chatRoomId)) {
-            System.out.println("sendimage 실패: 존재하지 않는 채팅방 [" + chatRoomId + "]");
             out.println("/sendimage fail 존재하지 않는 채팅방입니다.");
             return;
         }
 
         ChatRoom chatRoom = ServerApp.chatRooms.get(chatRoomId);
-
         boolean isMember = chatRoom.getMembers().stream().anyMatch(u -> u.getLoginID().equals(sender));
         if (!isMember) {
-            System.out.println("sendimage 실패: 사용자가 채팅방 멤버가 아님 [" + sender + "]");
             out.println("/sendimage fail 채팅방 멤버가 아닙니다.");
             return;
         }
@@ -518,7 +553,6 @@ public class UserHandler extends Thread {
         System.out.println("[개발용] : 수신한 sendemoji 명령어: [" + msg + "]");
         String[] tokens = msg.split(" ", 5);
         if (tokens.length != 5) {
-            System.out.println("[개발용] : sendemoji 명령어 파싱 실패: 잘못된 형식");
             out.println("/sendemoji fail 잘못된 형식입니다.");
             return;
         }
@@ -528,22 +562,14 @@ public class UserHandler extends Thread {
         String time = tokens[3];
         String emojiFileName = tokens[4];
 
-        System.out.println("[개발용] : 파싱된 chatRoomId: " + chatRoomId);
-        System.out.println("[개발용] : 파싱된 sender: " + sender);
-        System.out.println("[개발용] : 파싱된 time: " + time);
-        System.out.println("[개발용] : 파싱된 emojiFileName: " + emojiFileName);
-
         if (!ServerApp.chatRooms.containsKey(chatRoomId)) {
-            System.out.println("[개발용] : sendemoji 실패: 존재하지 않는 채팅방 [" + chatRoomId + "]");
             out.println("/sendemoji fail 존재하지 않는 채팅방입니다.");
             return;
         }
 
         ChatRoom chatRoom = ServerApp.chatRooms.get(chatRoomId);
-
         boolean isMember = chatRoom.getMembers().stream().anyMatch(u -> u.getLoginID().equals(sender));
         if (!isMember) {
-            System.out.println("[개발용] : sendemoji 실패: 사용자가 채팅방 멤버가 아님 [" + sender + "]");
             out.println("/sendemoji fail 채팅방 멤버가 아닙니다.");
             return;
         }
@@ -551,7 +577,6 @@ public class UserHandler extends Thread {
         String emojiFilePath = "src/Resources/emojis/" + emojiFileName;
         File emojiFile = new File(emojiFilePath);
         if (!emojiFile.exists()) {
-            System.out.println("[개발용] : sendemoji 실패: 이모티콘 파일이 존재하지 않음 [" + emojiFilePath + "]");
             out.println("/sendemoji fail 이모티콘 파일이 존재하지 않습니다.");
             return;
         }
@@ -568,15 +593,12 @@ public class UserHandler extends Thread {
         System.out.println("[개발용] : sendemoji 성공: " + formattedMessage);
     }
 
-    // 로그아웃 처리
     private void handleLogout() {
         ServerApp.onlineUsers.remove(loginID);
         out.println("/logout success 로그아웃 되었습니다.");
     }
 
-    // 메모 추가 처리
     private void handleAddMemo(String msg) {
-        // 형식: /addmemo memoContent
         String[] tokens = msg.split(" ", 2);
         if (tokens.length != 2) {
             out.println("/addmemo fail 잘못된 형식");
@@ -587,9 +609,7 @@ public class UserHandler extends Thread {
         out.println("/addmemo success");
     }
 
-    // 메모 수정 처리
     private void handleEditMemo(String msg) {
-        // 형식: /editmemo index newContent
         String[] tokens = msg.split(" ", 3);
         if (tokens.length != 3) {
             out.println("/editmemo fail 잘못된 형식");
@@ -611,9 +631,7 @@ public class UserHandler extends Thread {
         }
     }
 
-    // 메모 삭제 처리
     private void handleDeleteMemo(String msg) {
-        // 형식: /deletememo index
         String[] tokens = msg.split(" ", 2);
         if (tokens.length != 2) {
             out.println("/deletememo fail 잘못된 형식입니다.");
@@ -634,9 +652,7 @@ public class UserHandler extends Thread {
         }
     }
 
-    // 메모 목록 요청 처리
     private void handleGetMemos(String msg) {
-        // 형식: /getmemos userId
         String[] tokens = msg.split(" ", 2);
         if (tokens.length != 2) {
             out.println("/getmemos fail 잘못된 형식");

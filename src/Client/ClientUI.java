@@ -1,5 +1,6 @@
 package Client;
 
+import Model.Friend;
 import Model.User;
 
 import javax.swing.*;
@@ -239,23 +240,31 @@ public class ClientUI extends JFrame {
     }
 
     private void acceptFriendRequest() {
-        String selectedFriend = friendsPanel.getFriendRequestsListUI().getSelectedValue();
+        Friend selectedFriend = friendsPanel.getFriendRequestsListUI().getSelectedValue();
         if (selectedFriend == null) {
             JOptionPane.showMessageDialog(frame, "수락할 친구 요청을 선택하세요.");
             return;
         }
-        if (clientHandler != null) clientHandler.sendMessage("/acceptfriend " + selectedFriend);
-        friendsPanel.getFriendRequestsModel().removeElement(selectedFriend);
+
+        String loginID = selectedFriend.getLoginID(); // Friend 객체에서 직접 로그인 ID 가져오기
+        if (clientHandler != null) {
+            clientHandler.sendMessage("/acceptfriend " + loginID);
+        }
+        friendsPanel.getFriendRequestsModel().removeElement(selectedFriend); // 리스트에서 제거
     }
 
     private void rejectFriendRequest() {
-        String selectedFriend = friendsPanel.getFriendRequestsListUI().getSelectedValue();
+        Friend selectedFriend = friendsPanel.getFriendRequestsListUI().getSelectedValue();
         if (selectedFriend == null) {
             JOptionPane.showMessageDialog(frame, "거절할 친구 요청을 선택하세요.");
             return;
         }
-        if (clientHandler != null) clientHandler.sendMessage("/rejectfriend " + selectedFriend);
-        friendsPanel.getFriendRequestsModel().removeElement(selectedFriend);
+
+        String loginID = selectedFriend.getLoginID(); // Friend 객체에서 직접 로그인 ID 가져오기
+        if (clientHandler != null) {
+            clientHandler.sendMessage("/rejectfriend " + loginID);
+        }
+        friendsPanel.getFriendRequestsModel().removeElement(selectedFriend); // 리스트에서 제거
     }
 
     private void createChatRoom() {
@@ -265,7 +274,10 @@ public class ClientUI extends JFrame {
             return;
         }
 
-        List<String> friends = Collections.list(friendsPanel.getFriendsListModel().elements());
+        List<String> friends = Collections.list(friendsPanel.getFriendsListModel().elements()).stream()
+                .map(friend -> friend.getUserName())
+                .toList()
+                ;
         if (friends.isEmpty()) {
             JOptionPane.showMessageDialog(frame, "친구가 없습니다. 친구를 추가하세요.");
             return;
@@ -383,16 +395,32 @@ public class ClientUI extends JFrame {
         if (clientHandler != null) clientHandler.sendMessage("/deletememo " + index);
     }
 
-    public void updateFriendsList(List<String> friends) {
+    public void updateFriendsList(List<Friend> friends) {
         friendsPanel.getFriendsListModel().clear();
-        for (String friend : friends) {
+        for (Friend friend : friends) {
             friendsPanel.getFriendsListModel().addElement(friend);
         }
     }
 
-    public void addFriendRequest(String requesterLoginID) {
-        friendsPanel.getFriendRequestsModel().addElement(requesterLoginID);
-        JOptionPane.showMessageDialog(frame, requesterLoginID + "님이 친구 요청을 보냈습니다.");
+    public void addFriendRequest(Friend requester) {
+        friendsPanel.getFriendRequestsModel().addElement(requester);
+        JOptionPane.showMessageDialog(frame, requester.getUserName() + "님이 친구 요청을 보냈습니다.");
+    }
+
+
+    private String formatFriendDisplayName(Friend friend) {
+        // e.g., "홍길동 (loginID: hong123)"
+        return String.format("%s (ID: %s)", friend.getUserName(), friend.getLoginID());
+    }
+
+    private String extractLoginIDFromDisplayName(String displayName) {
+        // Extract loginID from display name, e.g., "홍길동 (ID: hong123)"
+        int idStart = displayName.indexOf("(ID: ");
+        int idEnd = displayName.indexOf(")", idStart);
+        if (idStart != -1 && idEnd != -1) {
+            return displayName.substring(idStart + 5, idEnd);
+        }
+        return null;
     }
 
     public void addChatRoom(String chatRoomDisplay) {
@@ -446,5 +474,117 @@ public class ClientUI extends JFrame {
         // FriendsPanel의 사용자 정보 업데이트
         friendsPanel.updateUserInfo(loginUser);
         switchToFriendsPanel();
+    }
+
+    // 친구의 프로필 이미지 업데이트
+    public void updateFriendProfileImage(String loginID, String newProfileImage) {
+        DefaultListModel<Friend> model = friendsPanel.getFriendsListModel();
+        boolean updated = false;
+
+        // 친구 목록에서 업데이트 시도
+        for (int i = 0; i < model.size(); i++) {
+            Friend friend = model.getElementAt(i);
+            if (friend.getLoginID().equals(loginID)) {
+                System.out.println("[개발용] : 친구 목록에서 프로필 이미지 업데이트: " + loginID);
+                friend.setProfileImage(newProfileImage);
+                model.setElementAt(friend, i); // 리스트 모델을 업데이트하여 변경 사항 반영
+                updated = true;
+                break;
+            }
+        }
+
+        // 친구 목록에 없을 경우, 친구 요청 목록에서 업데이트 시도
+        if (!updated) {
+            System.out.println("[개발용] : 친구 요청 목록에서 프로필 이미지 업데이트 시도: " + loginID);
+            updateFriendRequestProfileImage(loginID, newProfileImage);
+        }
+    }
+
+    // 친구의 상태 메시지 업데이트
+    public void updateFriendStatus(String loginID, String newStatus) {
+        DefaultListModel<Friend> model = friendsPanel.getFriendsListModel();
+        boolean updated = false;
+
+        // 친구 목록에서 업데이트 시도
+        for (int i = 0; i < model.size(); i++) {
+            Friend friend = model.getElementAt(i);
+            if (friend.getLoginID().equals(loginID)) {
+                System.out.println("[개발용] : 친구 목록에서 상태 메시지 업데이트: " + loginID);
+                friend.setInformation(newStatus);
+                model.setElementAt(friend, i); // 리스트 모델을 업데이트하여 변경 사항 반영
+                updated = true;
+                break;
+            }
+        }
+
+        // 친구 목록에 없을 경우, 친구 요청 목록에서 업데이트 시도
+        if (!updated) {
+            System.out.println("[개발용] : 친구 요청 목록에서 상태 메시지 업데이트 시도: " + loginID);
+            updateFriendRequestStatus(loginID, newStatus);
+        }
+    }
+
+    // 자신의 프로필 이미지 업데이트
+    public void updateOwnProfileImage(String newProfileImage) {
+        // 프로필 이미지 UI 업데이트
+        ImageIcon profileIcon = null;
+        if (newProfileImage != null && !newProfileImage.isEmpty()) {
+            try {
+                byte[] imageBytes = Base64.getDecoder().decode(newProfileImage);
+                Image image = Toolkit.getDefaultToolkit().createImage(imageBytes);
+                Image scaledImage = image.getScaledInstance(64, 64, Image.SCALE_SMOOTH);
+                profileIcon = new ImageIcon(scaledImage);
+            } catch (IllegalArgumentException e) {
+                System.err.println("Base64 디코딩 실패: " + e.getMessage());
+            }
+        }
+
+        if (profileIcon != null) {
+            friendsPanel.getProfileImageLabel().setIcon(profileIcon);
+            friendsPanel.getProfileImageLabel().setText("");
+        } else {
+            friendsPanel.getProfileImageLabel().setIcon(null);
+            friendsPanel.getProfileImageLabel().setText("이미지를 불러올 수 없습니다.");
+        }
+
+        // User 객체의 프로필 이미지 업데이트
+        if (loginUser != null) {
+            loginUser.setProfileImage(newProfileImage);
+        }
+    }
+
+    // 자신의 상태 메시지 업데이트
+    public void updateOwnStatusMessage(String newStatus) {
+        // 상태 메시지 UI 업데이트
+        friendsPanel.getStatusMessageValueLabel().setText(newStatus);
+
+        // User 객체의 상태 메시지 업데이트
+        if (loginUser != null) {
+            loginUser.setInformation(newStatus);
+        }
+    }
+
+    public void updateFriendRequestProfileImage(String loginID, String newProfileImage) {
+        DefaultListModel<Friend> model = friendsPanel.getFriendRequestsModel();
+        for (int i = 0; i < model.size(); i++) {
+            Friend friend = model.get(i);
+            if (friend.getLoginID().equals(loginID)) {
+                friend.setProfileImage(newProfileImage);
+                model.set(i, friend); // 모델 업데이트
+                break;
+            }
+        }
+    }
+
+    public void updateFriendRequestStatus(String loginID, String newStatus) {
+        DefaultListModel<Friend> model = friendsPanel.getFriendRequestsModel();
+        for (int i = 0; i < model.size(); i++) {
+            Friend friend = model.get(i);
+            if (friend.getLoginID().equals(loginID)) {
+                friend.setInformation(newStatus);
+                model.set(i, friend); // 모델 업데이트
+                break;
+            }
+        }
     }
 }
