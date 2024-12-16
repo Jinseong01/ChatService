@@ -5,6 +5,7 @@ import java.awt.*;
 
 public class AuthPanel extends JPanel {
     private static final Dimension FIELD_DIMENSION = new Dimension(200, 40); // 텍스트 필드와 버튼 높이 설정
+    private static final Color BACKGROUND_COLOR = new Color(250, 230, 77); // 노란색 배경
     private CardLayout cardLayout = new CardLayout();
     private JPanel loginPanel = new JPanel();
     private JPanel signupPanel = new JPanel();
@@ -24,6 +25,11 @@ public class AuthPanel extends JPanel {
 
     public AuthPanel() {
         setLayout(cardLayout);
+
+        // 배경색 설정
+        loginPanel.setBackground(BACKGROUND_COLOR);
+        signupPanel.setBackground(BACKGROUND_COLOR);
+
         createLoginPanel();
         createSignupPanel();
         add(loginPanel, "login");
@@ -53,7 +59,9 @@ public class AuthPanel extends JPanel {
         GridBagConstraints gbc = createGbc();
 
         // 제목
-        addComponent(signupPanel, gbc, 0, 0, 2, new JLabel("회원가입", SwingConstants.CENTER), 20);
+        JLabel titleLabel = new JLabel("회원가입", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 24)); // 제목의 폰트 크기 키움
+        addComponent(signupPanel, gbc, 0, 0, 2, titleLabel, 20);
 
         // 입력 필드
         addField(signupPanel, gbc, "로그인 ID:", signupLoginIDField, 1);

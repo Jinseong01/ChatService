@@ -27,49 +27,38 @@ public class FriendsPanel extends JPanel {
 
         // 상단 배너 패널
         JPanel bannerPanel = new JPanel(new BorderLayout());
-        JLabel bannerLabel = new JLabel("친구", SwingConstants.LEFT); // 배너 제목
+        JLabel bannerLabel = new JLabel("친구", SwingConstants.LEFT);
         bannerLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
         bannerLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 0));
 
-        addFriendButton.setPreferredSize(new Dimension(40, 40)); // 버튼 크기 설정
+        addFriendButton.setPreferredSize(new Dimension(40, 40));
         addFriendButton.setFocusable(false);
 
         bannerPanel.add(bannerLabel, BorderLayout.WEST);
         bannerPanel.add(addFriendButton, BorderLayout.EAST);
         bannerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        // 사용자 정보 패널 구성
-        // 첫 번째 줄: 프로필 이미지 + 이름
-        JPanel panelOne = new JPanel(new BorderLayout()); // BorderLayout을 사용해 프로필 이미지와 이름을 수평으로 배치
+        // 사용자 정보 패널 (이미지와 이름 및 상태 메시지)
+        JPanel userInfoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
 
-        // 프로필 이미지와 이름을 왼쪽 정렬로 배치
-        profileImageLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        nameValueLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // 프로필 이미지 설정
+        profileImageLabel.setPreferredSize(new Dimension(64, 64));
+        userInfoPanel.add(profileImageLabel);
 
-        // 프로필 이미지와 이름 사이에 공백을 추가
-        profileImageLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10)); // 이미지와 이름 사이 공백
+        // 이름과 상태 메시지를 하나의 패널에 추가
+        JPanel nameStatusPanel = new JPanel();
+        nameStatusPanel.setLayout(new BoxLayout(nameStatusPanel, BoxLayout.Y_AXIS));
 
-        // 프로필 이미지와 이름을 BorderLayout으로 배치
-        panelOne.add(profileImageLabel, BorderLayout.WEST); // 프로필 이미지를 왼쪽에 배치
-        panelOne.add(nameValueLabel, BorderLayout.CENTER); // 이름은 프로필 이미지 옆에 배치
+        nameValueLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
+        statusMessageValueLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        statusMessageValueLabel.setForeground(Color.GRAY);
 
-        // 두 번째 줄: 상태 메시지
-        JPanel panelTwo = new JPanel(new BorderLayout());
-        panelTwo.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
-        panelTwo.add(statusMessageValueLabel, BorderLayout.CENTER);
+        nameStatusPanel.add(nameValueLabel);
+        nameStatusPanel.add(statusMessageValueLabel);
 
-        // 전체 유저 정보 패널
-        JPanel userInfoPanel = new JPanel();
-        userInfoPanel.setLayout(new BoxLayout(userInfoPanel, BoxLayout.Y_AXIS));
-        userInfoPanel.setBorder(BorderFactory.createTitledBorder("내 정보"));
+        userInfoPanel.add(nameStatusPanel);
 
-        // panelOne을 유저 정보 패널에 추가
-        userInfoPanel.add(panelOne);
-        // panelTwo를 유저 정보 패널에 추가
-        userInfoPanel.add(panelTwo);
-
-
-        // 상단 컨테이너 패널 생성
+        // 상단 패널
         JPanel topPanel = new JPanel();
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
         topPanel.add(bannerPanel);
@@ -77,27 +66,24 @@ public class FriendsPanel extends JPanel {
 
         // 친구 목록 패널
         JPanel friendsListPanel = new JPanel(new BorderLayout());
-        friendsListPanel.setBorder(BorderFactory.createTitledBorder("친구 목록"));
-
-        // 친구 목록 UI에 커스텀 셀 렌더러 추가
+        friendsListPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
         friendsListUI.setCellRenderer(new CustomListCellRenderer());
         friendsListPanel.add(new JScrollPane(friendsListUI), BorderLayout.CENTER);
 
         // 친구 요청 패널
         JPanel friendRequestsPanel = new JPanel(new BorderLayout());
-        friendRequestsPanel.setBorder(BorderFactory.createTitledBorder("친구 요청"));
+        friendRequestsPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
         friendRequestsPanel.add(new JScrollPane(friendRequestsListUI), BorderLayout.CENTER);
 
         JPanel friendRequestButtons = new JPanel(new GridLayout(1, 2, 5, 5));
         friendRequestButtons.add(acceptFriendButton);
         friendRequestButtons.add(rejectFriendButton);
-
         friendRequestsPanel.add(friendRequestButtons, BorderLayout.SOUTH);
 
         // 전체 구성
-        add(topPanel, BorderLayout.PAGE_START); // 상단 컨테이너 패널 추가
-        add(friendsListPanel, BorderLayout.CENTER); // 친구 목록 추가
-        add(friendRequestsPanel, BorderLayout.SOUTH); // 친구 요청 추가
+        add(topPanel, BorderLayout.PAGE_START);
+        add(friendsListPanel, BorderLayout.CENTER);
+        add(friendRequestsPanel, BorderLayout.SOUTH);
     }
 
     public DefaultListModel<String> getFriendsListModel() {
@@ -141,8 +127,6 @@ public class FriendsPanel extends JPanel {
         try {
             byte[] imageBytes = Base64.getDecoder().decode(base64Image);
             ImageIcon icon = new ImageIcon(imageBytes);
-
-            // 필요하다면 아이콘 크기 조정
             Image image = icon.getImage().getScaledInstance(64, 64, Image.SCALE_SMOOTH);
             return new ImageIcon(image);
         } catch (IllegalArgumentException e) {
@@ -151,13 +135,11 @@ public class FriendsPanel extends JPanel {
         }
     }
 
-    // 사용자 정보 업데이트 메서드
     public void updateUserInfo(User loginUser) {
         SwingUtilities.invokeLater(() -> {
             nameValueLabel.setText(loginUser.getUserName());
             statusMessageValueLabel.setText(loginUser.getInformation());
 
-            // 프로필 이미지 표시
             ImageIcon profileIcon = base64ToImageIcon(loginUser.getProfileImage());
             if (profileIcon != null) {
                 profileImageLabel.setIcon(profileIcon);
@@ -169,14 +151,13 @@ public class FriendsPanel extends JPanel {
         });
     }
 
-    // 커스텀 셀 렌더러 클래스
     private static class CustomListCellRenderer extends DefaultListCellRenderer {
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            label.setFont(new Font("SansSerif", Font.PLAIN, 16)); // 폰트 크기 설정
-            label.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY)); // 경계선 추가
-            label.setPreferredSize(new Dimension(label.getWidth(), 30)); // 높이 설정
+            label.setFont(new Font("SansSerif", Font.PLAIN, 16));
+            label.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY));
+            label.setPreferredSize(new Dimension(label.getWidth(), 30));
             return label;
         }
     }

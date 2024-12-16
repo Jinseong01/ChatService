@@ -28,7 +28,8 @@ public class MemoPanel extends JPanel {
 
         // 메모 목록 패널
         JPanel memoListPanel = new JPanel(new BorderLayout());
-        memoListPanel.setBorder(BorderFactory.createTitledBorder("메모 목록"));
+//        memoListPanel.setBorder(BorderFactory.createTitledBorder("메모 목록"));
+        memoListPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
         memoListPanel.add(new JScrollPane(memoListUI), BorderLayout.CENTER);
 
         // 메모 관리 버튼

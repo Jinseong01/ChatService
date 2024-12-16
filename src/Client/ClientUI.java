@@ -77,6 +77,9 @@ public class ClientUI extends JFrame {
         chatButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         memoButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        // 메뉴 패널에 상단 여백 추가
+        menuPanel.add(Box.createVerticalStrut(15));
+
         // 메뉴 패널에 버튼 추가
         menuPanel.add(friendsButton);
         menuPanel.add(Box.createVerticalStrut(8)); // 버튼 간 여백
@@ -101,7 +104,12 @@ public class ClientUI extends JFrame {
 
         // 전체 레이아웃
         frame.setLayout(new BorderLayout());
+
+        // 경계선이 포함된 왼쪽 메뉴 패널
+        menuPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.LIGHT_GRAY)); // 오른쪽 경계선 추가
         frame.add(menuPanel, BorderLayout.WEST);
+
+        // 중앙 화면 패널
         frame.add(mainPanel, BorderLayout.CENTER);
 
         registerEventListeners();
