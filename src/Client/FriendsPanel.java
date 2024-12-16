@@ -130,7 +130,6 @@ public class FriendsPanel extends JPanel {
     }
 
     // 커스텀 셀 렌더러 클래스
-    // 커스텀 셀 렌더러 클래스
     private static class CustomListCellRenderer extends DefaultListCellRenderer {
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {

@@ -37,6 +37,9 @@ public class MemoPanel extends JPanel {
         memoButtons.add(deleteMemoButton);
         memoListPanel.add(memoButtons, BorderLayout.SOUTH);
 
+        // Custom Renderer 설정: 메모 내용만 보이도록
+        memoListUI.setCellRenderer(new MemoCellRenderer());
+
         // 전체 구성
         add(bannerPanel, BorderLayout.PAGE_START); // 상단 배너 추가
         add(memoListPanel, BorderLayout.CENTER);  // 메모 목록 추가
@@ -61,5 +64,29 @@ public class MemoPanel extends JPanel {
 
     public JButton getDeleteMemoButton() {
         return deleteMemoButton;
+    }
+
+    // Custom Cell Renderer 클래스
+    private static class MemoCellRenderer extends DefaultListCellRenderer {
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            String memo = value.toString();
+
+            // 인덱스를 제거하고 메모 내용만 표시 (기존 데이터를 가공)
+            if (memo.contains("] ")) {
+                memo = memo.substring(memo.indexOf("] ") + 2);
+            }
+
+            label.setText(memo); // 가공된 메모 내용 설정
+            label.setFont(new Font("SansSerif", Font.PLAIN, 16)); // 폰트 크기 설정
+            label.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createEmptyBorder(10, 10, 10, 10), // 패딩 추가
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY) // 경계선 추가
+            ));
+            label.setOpaque(true); // 배경색을 변경하려면 필요
+            label.setBackground(isSelected ? new Color(220, 240, 255) : Color.WHITE); // 선택된 항목 배경색
+            return label;
+        }
     }
 }
