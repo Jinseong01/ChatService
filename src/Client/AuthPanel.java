@@ -49,7 +49,7 @@ public class AuthPanel extends JPanel {
 
         // 버튼
         addComponent(loginPanel, gbc, 0, 3, 2, loginButton, 30);
-        addComponent(loginPanel, gbc, 0, 4, 2, signupButton, 10);
+        addComponent(loginPanel, gbc, 0, 4, 2, signupButton, 5);
 
         signupButton.addActionListener(e -> showSignupPanel());
     }

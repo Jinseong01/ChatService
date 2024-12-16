@@ -39,23 +39,27 @@ public class FriendsPanel extends JPanel {
         bannerPanel.add(addFriendButton, BorderLayout.EAST);
         bannerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        // 사용자 정보 패널 구성
-        JPanel panelOne = new JPanel(new BorderLayout());
-        profileImageLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10)); // 이미지와 이름 사이 공백
-        panelOne.add(profileImageLabel, BorderLayout.WEST); // 프로필 이미지를 왼쪽에 배치
-        panelOne.add(nameValueLabel, BorderLayout.CENTER); // 이름은 프로필 이미지 옆에 배치
+        // 사용자 정보 패널 (이미지와 이름 및 상태 메시지)
+        JPanel userInfoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
 
-        JPanel panelTwo = new JPanel(new BorderLayout());
-        panelTwo.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
-        panelTwo.add(statusMessageValueLabel, BorderLayout.CENTER);
+        // 프로필 이미지 설정
+        profileImageLabel.setPreferredSize(new Dimension(64, 64));
+        userInfoPanel.add(profileImageLabel);
 
-        JPanel userInfoPanel = new JPanel();
-        userInfoPanel.setLayout(new BoxLayout(userInfoPanel, BoxLayout.Y_AXIS));
-        userInfoPanel.setBorder(BorderFactory.createTitledBorder("내 정보"));
-        userInfoPanel.add(panelOne);
-        userInfoPanel.add(panelTwo);
+        // 이름과 상태 메시지를 하나의 패널에 추가
+        JPanel nameStatusPanel = new JPanel();
+        nameStatusPanel.setLayout(new BoxLayout(nameStatusPanel, BoxLayout.Y_AXIS));
 
-        // 상단 컨테이너 패널 생성
+        nameValueLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
+        statusMessageValueLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        statusMessageValueLabel.setForeground(Color.GRAY);
+
+        nameStatusPanel.add(nameValueLabel);
+        nameStatusPanel.add(statusMessageValueLabel);
+
+        userInfoPanel.add(nameStatusPanel);
+
+        // 상단 패널
         JPanel topPanel = new JPanel();
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
         topPanel.add(bannerPanel);
@@ -63,13 +67,18 @@ public class FriendsPanel extends JPanel {
 
         // 친구 목록 패널
         JPanel friendsListPanel = new JPanel(new BorderLayout());
-        friendsListPanel.setBorder(BorderFactory.createTitledBorder("친구 목록"));
+        friendsListPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
         friendsListUI.setCellRenderer(new CustomFriendListCellRenderer());
         friendsListPanel.add(new JScrollPane(friendsListUI), BorderLayout.CENTER);
 
+        // 친구 요청 라벨
+        JLabel friendRequestLabel = new JLabel("친구 요청");
+        friendRequestLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+        friendRequestLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+
         // 친구 요청 패널
         JPanel friendRequestsPanel = new JPanel(new BorderLayout());
-        friendRequestsPanel.setBorder(BorderFactory.createTitledBorder("친구 요청"));
+        friendRequestsPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
         friendRequestsListUI.setCellRenderer(new CustomFriendListCellRenderer());
         friendRequestsPanel.add(new JScrollPane(friendRequestsListUI), BorderLayout.CENTER);
 
@@ -79,10 +88,16 @@ public class FriendsPanel extends JPanel {
 
         friendRequestsPanel.add(friendRequestButtons, BorderLayout.SOUTH);
 
+        // 라벨과 친구 요청 패널을 감싸는 새로운 패널
+        JPanel friendRequestContainer = new JPanel();
+        friendRequestContainer.setLayout(new BorderLayout());
+        friendRequestContainer.add(friendRequestLabel, BorderLayout.NORTH);
+        friendRequestContainer.add(friendRequestsPanel, BorderLayout.CENTER);
+
         // 전체 구성
-        add(topPanel, BorderLayout.PAGE_START); // 상단 컨테이너 패널 추가
-        add(friendsListPanel, BorderLayout.CENTER); // 친구 목록 추가
-        add(friendRequestsPanel, BorderLayout.SOUTH); // 친구 요청 추가
+        add(topPanel, BorderLayout.PAGE_START);
+        add(friendsListPanel, BorderLayout.CENTER);
+        add(friendRequestContainer, BorderLayout.SOUTH);
     }
 
     public DefaultListModel<Friend> getFriendsListModel() {

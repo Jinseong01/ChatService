@@ -27,7 +27,6 @@ public class ChatPanel extends JPanel {
         // 채팅방 목록 패널
         JPanel chatRoomsPanel = new JPanel(new BorderLayout());
         chatRoomsPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
-//        chatRoomsPanel.setBorder(BorderFactory.createTitledBorder("채팅방 목록"));
 
         // Custom Renderer 설정
         chatRoomsListUI.setCellRenderer(new ChatRoomCellRenderer());
