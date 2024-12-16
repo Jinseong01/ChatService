@@ -75,6 +75,10 @@ public class UserHandler extends Thread {
                     handleSendEmoji(msg);
                 } else if (msg.startsWith("/sendimage")) {
                     handleSendImage(msg);
+                } else if (msg.startsWith("/updateprofileimage")) {
+                    handleUpdateProfileImage(msg);
+                } else if (msg.startsWith("/updatestatus ")) {
+                    handleUpdateStatus(msg);
                 } else {
                     System.out.println("정의되지 않은 명령어: " + msg);
                     out.println("/error 알 수 없는 명령어입니다.");
@@ -93,6 +97,57 @@ public class UserHandler extends Thread {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void handleUpdateStatus(String msg) {
+        String[] tokens = msg.split(" ", 3);
+        if (tokens.length != 3) {
+            out.println("/error 잘못된 형식입니다. 사용법: /updatestatus loginID newStatus");
+            return;
+        }
+
+        String targetLoginID = tokens[1];
+        String newStatus = tokens[2];
+
+        // 현재 로그인한 사용자만 자신의 상태메시지를 수정할 수 있다고 가정
+        if (!targetLoginID.equals(loginID)) {
+            out.println("/error 다른 사용자의 상태메시지는 수정할 수 없습니다.");
+            return;
+        }
+
+        // user 객체에 상태 메시지 설정
+        user.setInformation(newStatus);
+
+        // 변경 성공 메시지 전송
+        out.println("/updatestatus success");
+        System.out.println("[개발용] : " + loginID + "의 상태메시지 변경 성공: " + newStatus);
+
+        // 변경된 상태 메시지를 해당 사용자에게 다시 전송하여 UI 반영
+        out.println("/statusupdate " + newStatus);
+    }
+
+    private void handleUpdateProfileImage(String msg) {
+        String[] tokens = msg.split(" ", 3);
+        if (tokens.length != 3) {
+            out.println("/error 잘못된 형식입니다. 사용법: /updateprofileimage loginID base64Image");
+            return;
+        }
+
+        String targetLoginID = tokens[1];
+        String base64Image = tokens[2];
+
+        // 현재 로그인한 사용자만 자신의 프로필을 수정할 수 있다고 가정
+        if (!targetLoginID.equals(loginID)) {
+            out.println("/error 다른 사용자의 프로필은 수정할 수 없습니다.");
+            return;
+        }
+
+        // user 객체에 프로필 이미지 설정
+        user.setProfileImage(base64Image);
+
+        // 변경 성공 메시지 전송
+        System.out.println("[개발용] : " + loginID + "의 프로필 이미지 변경 성공");
+        out.println("/profileimageupdate " + base64Image);
     }
 
     // 회원가입 처리

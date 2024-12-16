@@ -122,6 +122,25 @@ public class ClientHandler {
         }
     }
 
+    public void updateProfileImage(String base64Image) {
+        // 형식: /updateprofileimage loginID base64ImageData
+        String command = "/updateprofileimage " + loginUser.getLoginID() + " " + base64Image;
+        sendMessage(command);
+    }
+
+    public void updateStatusMessage(String newStatus) {
+        if (loginUser == null) {
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(ui.getFrame(), "로그인이 필요합니다.", "오류", JOptionPane.ERROR_MESSAGE);
+            });
+            return;
+        }
+
+        // /updatestatus loginID newStatus
+        String command = "/updatestatus " + loginUser.getLoginID() + " " + newStatus;
+        sendMessage(command);
+    }
+
     private class Listener implements Runnable {
         @Override
         public void run() {
@@ -220,6 +239,39 @@ public class ClientHandler {
                         handleEditMemoResponse(msg);
                     } else if (msg.startsWith("/deletememo")) {
                         handleDeleteMemoResponse(msg);
+                    }
+                    else if (msg.startsWith("/profileimageupdate ")) {
+                        String[] tokens = msg.split(" ", 2);
+                        if (tokens.length == 2) {
+                            String newBase64Image = tokens[1];
+                            if (loginUser != null) {
+                                loginUser.setProfileImage(newBase64Image);
+
+                                // UI에 반영
+                                SwingUtilities.invokeLater(() -> {
+                                    ui.handleLoginSuccess(loginUser);
+                                    // 또는 ui 내에 프로필 업데이트만 하는 메서드를 호출해도 됨.
+                                });
+                            }
+                        } else {
+                            System.out.println("수신된 /profileimageupdate 명령어의 형식이 잘못되었습니다: " + msg);
+                        }
+                    }
+                    else if (msg.startsWith("/statusupdate ")) {
+                        String[] tokens = msg.split(" ", 2);
+                        if (tokens.length == 2) {
+                            String newStatus = tokens[1];
+                            if (loginUser != null) {
+                                loginUser.setInformation(newStatus);
+                                // UI에 반영
+                                SwingUtilities.invokeLater(() -> {
+                                    ui.handleLoginSuccess(loginUser);
+                                    // 또는 ui 내에 프로필 업데이트만 하는 메서드를 호출해도 됨.
+                                });
+                            }
+                        } else {
+                            System.out.println("수신된 /statusupdate 명령어 형식 잘못됨: " + msg);
+                        }
                     }
                 }
             } catch (IOException e) {

@@ -60,6 +60,17 @@ public class User {
         return memos;
     }
 
+    public void setInformation(String information) {
+        this.information = information;
+    }
+
+    public String getProfileImage() {
+        return profileImage;
+    }
+
+    public void setProfileImage(String profileImage) {
+        this.profileImage = profileImage;
+    }
 
     // 친구 추가
     public boolean addFriend(String friendLoginID) {
@@ -107,13 +118,5 @@ public class User {
                 "  friends=" + friends + ",\n" +
                 "  memos=" + memos + "\n" +
                 "}";
-    }
-
-    public String getProfileImage() {
-        return profileImage;
-    }
-
-    public void setProfileImage(String profileImage) {
-        this.profileImage = profileImage;
     }
 }

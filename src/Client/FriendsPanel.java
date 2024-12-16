@@ -128,6 +128,14 @@ public class FriendsPanel extends JPanel {
         return friendRequestsListUI;
     }
 
+    public JLabel getProfileImageLabel() {
+        return profileImageLabel;
+    }
+
+    public JLabel getStatusMessageValueLabel() {
+        return statusMessageValueLabel;
+    }
+
     private ImageIcon base64ToImageIcon(String base64Image) {
         if (base64Image == null || base64Image.isEmpty()) return null;
         try {

@@ -5,6 +5,8 @@ import Model.User;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
@@ -115,6 +117,18 @@ public class ClientUI extends JFrame {
         friendsPanel.getAddFriendButton().addActionListener(e -> sendFriendRequest());
         friendsPanel.getAcceptFriendButton().addActionListener(e -> acceptFriendRequest());
         friendsPanel.getRejectFriendButton().addActionListener(e -> rejectFriendRequest());
+        friendsPanel.getProfileImageLabel().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                editProfileImageClick(); // 별도 메서드 호출만 수행
+            }
+        });
+        friendsPanel.getStatusMessageValueLabel().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                editStatusMessageClick(); // 별도 메서드 호출만 수행
+            }
+        });
 
         // ChatPanel 이벤트
         chatPanel.getCreateChatButton().addActionListener(e -> createChatRoom());
@@ -137,6 +151,35 @@ public class ClientUI extends JFrame {
                 }
             }
         });
+    }
+
+    private void editStatusMessageClick() {
+        String newStatus = JOptionPane.showInputDialog(getFrame(), "새 상태메시지를 입력하세요:");
+        if (newStatus != null && !newStatus.trim().isEmpty()) {
+            clientHandler.updateStatusMessage(newStatus.trim());
+        }
+    }
+
+    private void editProfileImageClick() {
+        JFileChooser fileChooser = new JFileChooser();
+        int result = fileChooser.showOpenDialog(getFrame());
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            if (selectedFile != null && selectedFile.exists()) {
+                try {
+                    byte[] fileBytes = java.nio.file.Files.readAllBytes(selectedFile.toPath());
+                    String base64Image = Base64.getEncoder().encodeToString(fileBytes);
+
+                    if (clientHandler != null) {
+                        clientHandler.updateProfileImage(base64Image);
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(getFrame(), "이미지 파일을 읽는 동안 오류가 발생했습니다.", "오류", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
     }
 
     public void switchToSignup() {
