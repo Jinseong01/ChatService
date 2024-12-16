@@ -67,6 +67,9 @@ public class FriendsPanel extends JPanel {
         // 친구 목록 패널
         JPanel friendsListPanel = new JPanel(new BorderLayout());
         friendsListPanel.setBorder(BorderFactory.createTitledBorder("친구 목록"));
+
+        // 친구 목록 UI에 커스텀 셀 렌더러 추가
+        friendsListUI.setCellRenderer(new CustomListCellRenderer());
         friendsListPanel.add(new JScrollPane(friendsListUI), BorderLayout.CENTER);
 
         // 친구 요청 패널
@@ -124,5 +127,18 @@ public class FriendsPanel extends JPanel {
             nicknameValueLabel.setText(loginUser.getNickname());
             statusMessageValueLabel.setText(loginUser.getInformation());
         });
+    }
+
+    // 커스텀 셀 렌더러 클래스
+    // 커스텀 셀 렌더러 클래스
+    private static class CustomListCellRenderer extends DefaultListCellRenderer {
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            label.setFont(new Font("SansSerif", Font.PLAIN, 16)); // 폰트 크기 설정
+            label.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY)); // 경계선 추가
+            label.setPreferredSize(new Dimension(label.getWidth(), 30)); // 높이 설정
+            return label;
+        }
     }
 }
