@@ -280,16 +280,22 @@ public class ClientHandler {
             }
 
             String chatRoomName = tokens[1];
-            List<String> onlineFriends = tokens.length > 2
+            List<String> onlineLoginIDs = tokens.length > 2
                     ? Arrays.asList(tokens).subList(2, tokens.length)
                     : Collections.emptyList();
 
-            if (!onlineFriends.isEmpty()) {
+            if (!onlineLoginIDs.isEmpty()) {
+                List<Friend> friends = new ArrayList<>(loginUser.getFriends());
                 StringBuilder sb = new StringBuilder("/createchat " + chatRoomName);
-                for (String friend : onlineFriends) {
-                    sb.append(" ").append(friend);
+
+                for (String loginID : onlineLoginIDs) {
+                    friends.stream()
+                            .filter(friend -> friend.getLoginID().equals(loginID))
+                            .findFirst()
+                            .ifPresent(friend -> sb.append(" ").append(friend.getLoginID()));
                 }
-                ClientHandler.this.sendMessage(sb.toString()); // ClientHandler의 sendMessage 메서드 호출
+
+                ClientHandler.this.sendMessage(sb.toString()); // 채팅방 생성 요청
             } else {
                 JOptionPane.showMessageDialog(ui.getFrame(), "선택된 친구 중 접속 중인 사용자가 없습니다.");
             }

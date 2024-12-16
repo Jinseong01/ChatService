@@ -274,16 +274,15 @@ public class ClientUI extends JFrame {
             return;
         }
 
-        List<String> friends = Collections.list(friendsPanel.getFriendsListModel().elements()).stream()
-                .map(friend -> friend.getUserName())
-                .toList()
-                ;
+        List<Friend> friends = Collections.list(friendsPanel.getFriendsListModel().elements());
         if (friends.isEmpty()) {
             JOptionPane.showMessageDialog(frame, "친구가 없습니다. 친구를 추가하세요.");
             return;
         }
 
-        CheckBoxListModel model = new CheckBoxListModel(friends);
+        CheckBoxListModel model = new CheckBoxListModel(friends.stream()
+                .map(Friend::getUserName)
+                .toList());
         JList<String> friendsJList = new JList<>(model);
         friendsJList.setCellRenderer(new CheckBoxListRenderer());
 
@@ -303,16 +302,19 @@ public class ClientUI extends JFrame {
                 "채팅방에 추가할 친구를 선택하세요", JOptionPane.OK_CANCEL_OPTION);
 
         if (result == JOptionPane.OK_OPTION) {
-            List<String> selectedFriends = model.getCheckedItems();
-            if (selectedFriends.isEmpty()) {
+            List<String> selectedUserNames = model.getCheckedItems();
+            if (selectedUserNames.isEmpty()) {
                 JOptionPane.showMessageDialog(frame, "최소 하나의 친구를 선택하세요.");
                 return;
             }
 
-            // 서버로 선택된 친구들의 접속 여부 확인 요청
-            StringBuilder sb = new StringBuilder("/checkonline " + chatRoomName); // chatRoomName 추가
-            for (String friend : selectedFriends) {
-                sb.append(" ").append(friend);
+            // 선택된 userName을 loginID로 변환하여 명령 생성
+            StringBuilder sb = new StringBuilder("/checkonline " + chatRoomName);
+            for (String userName : selectedUserNames) {
+                friends.stream()
+                        .filter(friend -> friend.getUserName().equals(userName))
+                        .findFirst()
+                        .ifPresent(friend -> sb.append(" ").append(friend.getLoginID()));
             }
 
             if (clientHandler != null) {
