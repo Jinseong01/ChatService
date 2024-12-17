@@ -10,17 +10,19 @@ public class AuthPanel extends JPanel {
     private JPanel loginPanel = new JPanel();
     private JPanel signupPanel = new JPanel();
 
+    // 로그인 필드
     private JTextField loginUserField = createSizedTextField();
     private JPasswordField loginPassField = createSizedPasswordField();
     private JButton loginButton = createSizedButton("로그인");
     private JButton signupButton = createSizedButton("회원가입");
 
+    // 회원가입 필드
     private JTextField signupLoginIDField = createSizedTextField();
     private JPasswordField signupLoginPWField = createSizedPasswordField();
     private JTextField signupUserNameField = createSizedTextField();
     private JTextField signupBirthdayField = createSizedTextField();
     private JTextField signupNicknameField = createSizedTextField();
-    private JTextArea signupInformationArea = new JTextArea(3, 15);
+    private JTextField signupStatusMessageField = createSizedTextField(); // 상태 메시지 필드
     private JButton registerButton = createSizedButton("회원가입 완료");
 
     public AuthPanel() {
@@ -32,6 +34,7 @@ public class AuthPanel extends JPanel {
 
         createLoginPanel();
         createSignupPanel();
+
         add(loginPanel, "login");
         add(signupPanel, "signup");
     }
@@ -60,23 +63,20 @@ public class AuthPanel extends JPanel {
 
         // 제목
         JLabel titleLabel = new JLabel("회원가입", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 24)); // 제목의 폰트 크기 키움
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 24)); // 제목 폰트 설정
         addComponent(signupPanel, gbc, 0, 0, 2, titleLabel, 20);
 
-        // 입력 필드
+        // 입력 필드들
         addField(signupPanel, gbc, "로그인 ID:", signupLoginIDField, 1);
         addField(signupPanel, gbc, "비밀번호:", signupLoginPWField, 2);
         addField(signupPanel, gbc, "사용자 이름:", signupUserNameField, 3);
         addField(signupPanel, gbc, "생일(YYYY-MM-DD):", signupBirthdayField, 4);
         addField(signupPanel, gbc, "닉네임:", signupNicknameField, 5);
-
-        // 정보 텍스트 영역
-        addComponent(signupPanel, gbc, 0, 6, 2, new JScrollPane(signupInformationArea), 10);
-        signupInformationArea.setLineWrap(true);
-        signupInformationArea.setWrapStyleWord(true);
+        addField(signupPanel, gbc, "상태 메시지:", signupStatusMessageField, 6);
 
         // 버튼
         addComponent(signupPanel, gbc, 0, 7, 2, registerButton, 30);
+
         JButton backButton = createSizedButton("취소");
         backButton.addActionListener(e -> showLoginPanel());
         addComponent(signupPanel, gbc, 0, 8, 2, backButton, 10);
@@ -84,8 +84,8 @@ public class AuthPanel extends JPanel {
 
     private GridBagConstraints createGbc() {
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(10, 10, 10, 10); // 패딩 설정
+        gbc.fill = GridBagConstraints.HORIZONTAL; // 수평으로 채움
         return gbc;
     }
 
@@ -143,6 +143,6 @@ public class AuthPanel extends JPanel {
     public JTextField getSignupUserNameField() { return signupUserNameField; }
     public JTextField getSignupBirthdayField() { return signupBirthdayField; }
     public JTextField getSignupNicknameField() { return signupNicknameField; }
-    public JTextArea getSignupInformationArea() { return signupInformationArea; }
+    public JTextField getSignupStatusMessageField() { return signupStatusMessageField; }
     public JButton getRegisterButton() { return registerButton; }
 }

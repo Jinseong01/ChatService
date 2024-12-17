@@ -10,6 +10,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Base64;
+import java.io.FileOutputStream;
 
 public class UserHandler extends Thread {
     private Socket socket;
@@ -570,7 +572,7 @@ public class UserHandler extends Thread {
         String chatRoomId = tokens[1];
         String sender = tokens[2];
         String time = tokens[3];
-        String imagePath = tokens[4];
+        String base64Image = tokens[4];
 
         if (!ServerApp.chatRooms.containsKey(chatRoomId)) {
             out.println("/sendimage fail 존재하지 않는 채팅방입니다.");
@@ -584,16 +586,39 @@ public class UserHandler extends Thread {
             return;
         }
 
-        String formattedMessage = "/sendimage " + chatRoomId + " " + sender + " " + time + " " + imagePath;
-        chatRoom.addMessage(formattedMessage);
+        try {
+            // Base64 문자열을 디코딩하여 이미지 저장
+            byte[] imageBytes = Base64.getDecoder().decode(base64Image);
+            String outputFileName = "received_image_" + System.currentTimeMillis() + ".png";
+            String imagePath = "src/Resources/received_images/" + outputFileName;
 
-        for (UserSummary member : chatRoom.getMembers()) {
-            if (ServerApp.onlineUsers.containsKey(member.getLoginID())) {
-                ServerApp.onlineUsers.get(member.getLoginID()).sendMessage(formattedMessage);
+            File outputFile = new File(imagePath);
+            outputFile.getParentFile().mkdirs(); // 폴더가 없으면 생성
+            try (FileOutputStream fos = new FileOutputStream(outputFile)) {
+                fos.write(imageBytes);
             }
-        }
 
-        System.out.println("sendimage 성공: " + formattedMessage);
+            System.out.println("이미지 저장 완료: " + imagePath);
+
+            // 메시지를 채팅방 멤버들에게 전송
+            String formattedMessage = "/sendimage " + chatRoomId + " " + sender + " " + time + " " + base64Image;
+            chatRoom.addMessage(formattedMessage);
+
+            for (UserSummary member : chatRoom.getMembers()) {
+                if (ServerApp.onlineUsers.containsKey(member.getLoginID())) {
+                    ServerApp.onlineUsers.get(member.getLoginID()).sendMessage(formattedMessage);
+                }
+            }
+
+            System.out.println("sendimage 성공: " + formattedMessage);
+
+        } catch (IllegalArgumentException e) {
+            System.err.println("Base64 디코딩 실패: " + e.getMessage());
+            out.println("/sendimage fail 이미지 디코딩 실패");
+        } catch (IOException e) {
+            System.err.println("이미지 저장 중 오류 발생: " + e.getMessage());
+            out.println("/sendimage fail 이미지 저장 실패");
+        }
     }
 
     private void handleSendEmoji(String msg) {

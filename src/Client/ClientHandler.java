@@ -6,6 +6,8 @@ import Model.User;
 import javax.swing.*;
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -115,13 +117,20 @@ public class ClientHandler {
         }
 
         try {
-            // 서버에 이미지 전송 명령어
+            // 이미지를 바이트 배열로 읽기
+            byte[] imageBytes = Files.readAllBytes(Paths.get(imageFile.getAbsolutePath()));
+
+            // Base64로 인코딩
+            String base64Image = Base64.getEncoder().encodeToString(imageBytes);
             String time = new SimpleDateFormat("HH:mm").format(new Date());
-            String command = "/sendimage " + chatRoomId + " " + loginUser.getLoginID() + " " + time + " " + imageFile.getAbsolutePath();
+
+            // 서버에 Base64 데이터 전송
+            String command = "/sendimage " + chatRoomId + " " + loginUser.getLoginID() + " " + time + " " + base64Image;
             out.println(command);
-            System.out.println("전송 명령어: " + command);
-        } catch (Exception e) {
-            System.err.println("이미지 전송 중 오류 발생: " + e.getMessage());
+            out.flush();
+            System.out.println("이미지 전송 명령어: " + command);
+        } catch (IOException e) {
+            System.err.println("이미지 읽기 및 전송 중 오류 발생: " + e.getMessage());
         }
     }
 

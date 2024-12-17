@@ -223,7 +223,7 @@ public class ClientUI extends JFrame {
         String userName = authPanel.getSignupUserNameField().getText().trim();
         String birthday = authPanel.getSignupBirthdayField().getText().trim();
         String nickname = authPanel.getSignupNicknameField().getText().trim();
-        String information = authPanel.getSignupInformationArea().getText().trim().replace(" ", "_");
+        String information = authPanel.getSignupStatusMessageField().getText().trim().replace(" ", "_");
 
         if (id.isEmpty() || pw.isEmpty() || userName.isEmpty() || birthday.isEmpty() || nickname.isEmpty()) {
             JOptionPane.showMessageDialog(frame, "모든 필드를 입력하세요.");

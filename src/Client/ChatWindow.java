@@ -228,22 +228,14 @@ public class ChatWindow extends JFrame {
         chatArea.setCaretPosition(doc.getLength());
     }
 
-    protected void appendImage(String senderLoginID, String time, String imagePath) {
-        System.out.println("[개발용] : appendImage 호출됨: senderLoginID=" + senderLoginID + ", imagePath=" + imagePath);
-        String os = System.getProperty("os.name").toLowerCase();
-        System.out.println("[개발용] : 클라이언트 OS : " + os);
-        File imageFile = new File(imagePath);
-
-        if (!imageFile.exists()) {
-            System.err.println("이미지 파일이 존재하지 않습니다: " + imagePath);
-            return;
-        }
+    protected void appendImage(String senderLoginID, String time, String base64ImageData) {
+        System.out.println("[개발용] : appendImage 호출됨: senderLoginID=" + senderLoginID);
 
         try {
-            // 이미지 로드
-            ImageIcon icon = new ImageIcon(imageFile.getAbsolutePath());
-            if (icon.getIconWidth() == -1) {
-                System.err.println("이미지 로드 실패: " + imagePath);
+            // Base64 데이터를 이미지로 변환
+            ImageIcon icon = base64ToImageIcon(base64ImageData);
+            if (icon == null) {
+                System.err.println("이미지 로드 실패: Base64 데이터가 잘못되었습니다.");
                 return;
             }
 
@@ -266,12 +258,10 @@ public class ChatWindow extends JFrame {
 
             // 프로필 이미지 삽입과 이미지 삽입
             if (alignment.equals("left")) {
-                // 발신자가 다른 사용자일 경우: 이미지 먼저, 메시지 나중에
                 insertProfileImage(doc, senderLoginID, base64Image, alignment);
                 insertMessageText(doc, senderStyle + " : ", alignment);
                 insertImage(doc, scaledIcon, alignment);
             } else {
-                // 발신자가 본인인 경우: 메시지 먼저, 이미지 나중에
                 insertMessageText(doc, senderStyle + ": ", alignment);
                 insertImage(doc, scaledIcon, alignment);
                 insertProfileImage(doc, senderLoginID, base64Image, alignment);
@@ -284,7 +274,6 @@ public class ChatWindow extends JFrame {
             e.printStackTrace();
         }
 
-        // 채팅 영역 스크롤 이동
         chatArea.setCaretPosition(chatArea.getDocument().getLength());
     }
 
