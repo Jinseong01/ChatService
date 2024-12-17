@@ -1,6 +1,6 @@
 package Client;
 
-import Model.Friend;
+import Model.UserSummary;
 import Model.User;
 
 import javax.swing.*;
@@ -20,6 +20,8 @@ public class ClientHandler {
 
     // 채팅방ID -> ChatWindow 맵
     private Map<String, ChatWindow> chatWindows = new HashMap<>();
+    // 채팅방ID -> 채팅방 멤버 Set<Friend>
+    private Map<String, Set<UserSummary>> chatRoomMembers = new HashMap<>();
 
     public ClientHandler(ClientUI ui) {
         this.ui = ui;
@@ -146,6 +148,10 @@ public class ClientHandler {
         return loginUser;
     }
 
+    public Set<UserSummary> getChatRoomMembers(String chatRoomId) {
+        return chatRoomMembers.get(chatRoomId);
+    }
+
     private class Listener implements Runnable {
         @Override
         public void run() {
@@ -232,6 +238,8 @@ public class ClientHandler {
                         handleCreateChat(msg);
                     } else if (msg.startsWith("/createchat_success")) {
                         handleCreateChatSuccess(msg);
+                    } else if (msg.startsWith("/createchat_members")) {
+                        handleCreateChatMembers(msg);
                     } else if (msg.startsWith("/logout")) {
                         handleLogoutResponse(msg);
                     } else if (msg.startsWith("/memosstart")) {
@@ -289,11 +297,11 @@ public class ClientHandler {
                     : Collections.emptyList();
 
             if (!onlineLoginIDs.isEmpty()) {
-                List<Friend> friends = new ArrayList<>(loginUser.getFriends());
+                List<UserSummary> userSummaries = new ArrayList<>(loginUser.getFriends());
                 StringBuilder sb = new StringBuilder("/createchat " + chatRoomName);
 
                 for (String loginID : onlineLoginIDs) {
-                    friends.stream()
+                    userSummaries.stream()
                             .filter(friend -> friend.getLoginID().equals(loginID))
                             .findFirst()
                             .ifPresent(friend -> sb.append(" ").append(friend.getLoginID()));
@@ -364,7 +372,7 @@ public class ClientHandler {
             String[] tokens = msg.split(" ");
             if (tokens.length < 2) return;
 
-            Set<Friend> friends = new HashSet<>();
+            Set<UserSummary> userSummaries = new HashSet<>();
             for (int i = 1; i < tokens.length; i++) {
                 String[] friendData = tokens[i].split("\\|");
                 if (friendData.length == 4) {
@@ -372,17 +380,17 @@ public class ClientHandler {
                     String userName = friendData[1].replace("_", " ");
                     String info = friendData[2].replace("_", " ");
                     String profileImage = friendData[3];
-                    friends.add(new Friend(loginID, userName, info, profileImage));
+                    userSummaries.add(new UserSummary(loginID, userName, info, profileImage));
                 }
             }
 
             if (loginUser != null) {
-                loginUser.setFriends(friends);
+                loginUser.setFriends(userSummaries);
                 SwingUtilities.invokeLater(() -> {
-                    ui.updateFriendsList(new ArrayList<>(friends));
+                    ui.updateFriendsList(new ArrayList<>(userSummaries));
                 });
             }
-            System.out.println("[개발용] : " + loginUser.getLoginID() + "의 친구 목록 업데이트 완료: " + friends);
+            System.out.println("[개발용] : " + loginUser.getLoginID() + "의 친구 목록 업데이트 완료: " + userSummaries);
         }
 
         private void handleFriendRequest(String msg) {
@@ -397,7 +405,7 @@ public class ClientHandler {
                 String info = friendData[2].replace("_", " ");
                 String profileImage = friendData[3];
 
-                Friend requester = new Friend(loginID, userName, info, profileImage);
+                UserSummary requester = new UserSummary(loginID, userName, info, profileImage);
                 SwingUtilities.invokeLater(() -> {
                     ui.addFriendRequest(requester);
                 });
@@ -416,9 +424,9 @@ public class ClientHandler {
                 String info = friendData[2].replace("_", " ");
                 String profileImage = friendData[3];
 
-                Friend newFriend = new Friend(loginID, userName, info, profileImage);
+                UserSummary newUserSummary = new UserSummary(loginID, userName, info, profileImage);
                 if (loginUser != null) {
-                    loginUser.addFriend(newFriend);
+                    loginUser.addFriend(newUserSummary);
                     SwingUtilities.invokeLater(() -> {
                         ui.updateFriendsList(new ArrayList<>(loginUser.getFriends()));
                         JOptionPane.showMessageDialog(ui.getFrame(), userName + "님이 친구 요청을 수락했습니다.");
@@ -456,6 +464,22 @@ public class ClientHandler {
             SwingUtilities.invokeLater(() -> {
                 JOptionPane.showMessageDialog(ui.getFrame(), successMsg);
             });
+        }
+
+        private Set<UserSummary> parseChatRoomMembers(String membersData) {
+            Set<UserSummary> members = new HashSet<>();
+            String[] memberList = membersData.split(" ");
+            for (String memberInfo : memberList) {
+                String[] info = memberInfo.split("\\|");
+                if (info.length == 4) { // loginID, userName, profileImage, statusMessage
+                    String loginID = info[0];
+                    String userName = info[1].replace("_", " "); // 공백 복구
+                    String profileImage = info[2];
+                    String statusMessage = info[3].replace("_", " "); // 상태 메시지도 공백 복구
+                    members.add(new UserSummary(loginID, userName, statusMessage, profileImage));
+                }
+            }
+            return members;
         }
 
         private void handleLogoutResponse(String msg) {
@@ -548,7 +572,21 @@ public class ClientHandler {
                         // 친구 요청 목록 업데이트
                         ui.updateFriendRequestProfileImage(updatedLoginID, newProfileImage);
                     }
+
+                    // 채팅방 멤버 목록 업데이트
+                    updateChatRoomMembersProfileImage(updatedLoginID, newProfileImage);
                 });
+            }
+        }
+
+
+        private void updateChatRoomMembersProfileImage(String updatedLoginID, String newProfileImage) {
+            for (Set<UserSummary> members : chatRoomMembers.values()) {
+                for (UserSummary member : members) {
+                    if (member.getLoginID().equals(updatedLoginID)) {
+                        member.setProfileImage(newProfileImage);
+                    }
+                }
             }
         }
 
@@ -572,5 +610,36 @@ public class ClientHandler {
                 });
             }
         }
+    }
+
+    // 채팅방 멤버 데이터를 파싱하여 저장
+    private void handleCreateChatMembers(String msg) {
+        String[] tokens = msg.split(" ", 3);
+        if (tokens.length < 3) return;
+
+        String chatRoomId = tokens[1];
+        String membersData = tokens[2];
+
+        Set<UserSummary> members = parseChatRoomMembers(membersData);
+        chatRoomMembers.put(chatRoomId, members);
+
+        System.out.println("[개발용] 채팅방 멤버 저장 완료: " + chatRoomId);
+    }
+
+    // 기존 멤버 파싱 메서드 재사용
+    private Set<UserSummary> parseChatRoomMembers(String membersData) {
+        Set<UserSummary> members = new HashSet<>();
+        String[] memberList = membersData.split(" ");
+        for (String memberInfo : memberList) {
+            String[] info = memberInfo.split("\\|");
+            if (info.length == 4) { // loginID, userName, profileImage, statusMessage
+                String loginID = info[0];
+                String userName = info[1].replace("_", " ");
+                String profileImage = info[2];
+                String statusMessage = info[3].replace("_", " ");
+                members.add(new UserSummary(loginID, userName, statusMessage, profileImage));
+            }
+        }
+        return members;
     }
 }

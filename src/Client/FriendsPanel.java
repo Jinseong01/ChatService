@@ -1,6 +1,6 @@
 package Client;
 
-import Model.Friend;
+import Model.UserSummary;
 import Model.User;
 
 import javax.swing.*;
@@ -8,11 +8,11 @@ import java.awt.*;
 import java.util.Base64;
 
 public class FriendsPanel extends JPanel {
-    private DefaultListModel<Friend> friendsListModel = new DefaultListModel<>();
-    private JList<Friend> friendsListUI = new JList<>(friendsListModel);
+    private DefaultListModel<UserSummary> friendsListModel = new DefaultListModel<>();
+    private JList<UserSummary> friendsListUI = new JList<>(friendsListModel);
 
-    private DefaultListModel<Friend> friendRequestsModel = new DefaultListModel<>();
-    private JList<Friend> friendRequestsListUI = new JList<>(friendRequestsModel);
+    private DefaultListModel<UserSummary> friendRequestsModel = new DefaultListModel<>();
+    private JList<UserSummary> friendRequestsListUI = new JList<>(friendRequestsModel);
 
     private JButton addFriendButton = new JButton("+"); // 친구 추가 버튼
     private JButton acceptFriendButton = new JButton("수락"); // 친구 요청 수락 버튼
@@ -100,11 +100,11 @@ public class FriendsPanel extends JPanel {
         add(friendRequestContainer, BorderLayout.SOUTH);
     }
 
-    public DefaultListModel<Friend> getFriendsListModel() {
+    public DefaultListModel<UserSummary> getFriendsListModel() {
         return friendsListModel;
     }
 
-    public DefaultListModel<Friend> getFriendRequestsModel() {
+    public DefaultListModel<UserSummary> getFriendRequestsModel() {
         return friendRequestsModel;
     }
 
@@ -120,11 +120,11 @@ public class FriendsPanel extends JPanel {
         return rejectFriendButton;
     }
 
-    public JList<Friend> getFriendsListUI() {
+    public JList<UserSummary> getFriendsListUI() {
         return friendsListUI;
     }
 
-    public JList<Friend> getFriendRequestsListUI() {
+    public JList<UserSummary> getFriendRequestsListUI() {
         return friendRequestsListUI;
     }
 
@@ -168,7 +168,7 @@ public class FriendsPanel extends JPanel {
     }
 
     // 커스텀 셀 렌더러 클래스
-    private static class CustomFriendListCellRenderer extends JPanel implements ListCellRenderer<Friend> {
+    private static class CustomFriendListCellRenderer extends JPanel implements ListCellRenderer<UserSummary> {
         private JLabel nameLabel;
         private JLabel statusMessageLabel;
         private JLabel profileImageLabel;
@@ -201,18 +201,18 @@ public class FriendsPanel extends JPanel {
         }
 
         @Override
-        public Component getListCellRendererComponent(JList<? extends Friend> list, Friend friend, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList<? extends UserSummary> list, UserSummary userSummary, int index, boolean isSelected, boolean cellHasFocus) {
             // 이름 설정
-            nameLabel.setText(friend.getUserName());
+            nameLabel.setText(userSummary.getUserName());
 
             // 상태 메시지 설정
-            String statusMessage = friend.getInformation();
+            String statusMessage = userSummary.getInformation();
             statusMessageLabel.setText(statusMessage != null ? statusMessage : "");
 
             // 프로필 이미지 설정
-            if (friend.getProfileImage() != null && !friend.getProfileImage().isEmpty()) {
+            if (userSummary.getProfileImage() != null && !userSummary.getProfileImage().isEmpty()) {
                 try {
-                    byte[] imageBytes = Base64.getDecoder().decode(friend.getProfileImage());
+                    byte[] imageBytes = Base64.getDecoder().decode(userSummary.getProfileImage());
                     ImageIcon profileIcon = new ImageIcon(imageBytes);
                     Image image = profileIcon.getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH);
                     profileImageLabel.setIcon(new ImageIcon(image));

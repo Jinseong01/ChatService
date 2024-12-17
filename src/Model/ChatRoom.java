@@ -6,10 +6,10 @@ import java.util.concurrent.*;
 public class ChatRoom {
     private String id; // 채팅방 고유ID
     private String name; // 채팅방 이름
-    private Set<User> members; // 채팅방 참여자 목록
+    private Set<UserSummary> members; // 채팅방 참여자 목록
     private List<String> chatHistory; // 채팅방 대화 내용
 
-    public ChatRoom(String id, String name, Set<User> members) {
+    public ChatRoom(String id, String name, Set<UserSummary> members) {
         this.id = id;
         this.name = name;
         this.members = ConcurrentHashMap.newKeySet();
@@ -34,11 +34,11 @@ public class ChatRoom {
         this.name = name;
     }
 
-    public Set<User> getMembers() {
+    public Set<UserSummary> getMembers() {
         return members;
     }
 
-    public void setMembers(Set<User> members) {
+    public void setMembers(Set<UserSummary> members) {
         this.members = members;
     }
 

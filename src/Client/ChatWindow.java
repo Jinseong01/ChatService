@@ -1,17 +1,17 @@
 package Client;
 
-import Model.Friend;
+import Model.UserSummary;
 
 import javax.swing.*;
 import javax.swing.text.*;
 import java.awt.*;
-import java.awt.event.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ChatWindow extends JFrame {
     private String chatRoomId;
@@ -45,7 +45,6 @@ public class ChatWindow extends JFrame {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         chatArea.setEditable(false);
-        // "text/plain"으로 설정하면 StyledDocument를 통한 이미지 삽입이 가능하지만, 이미지 삽입을 위한 별도의 처리가 필요합니다.
         chatArea.setContentType("text/plain");
         chatArea.setText("");
         chatArea.setCaretPosition(chatArea.getDocument().getLength());
@@ -139,11 +138,18 @@ public class ChatWindow extends JFrame {
         String base64Image;
         String senderStyle;
 
-        // sender 찾기
-        Friend sender = handler.getLoginUser().getFriends().stream()
-                .filter(friend -> friend.getLoginID().equals(senderLoginID))
-                .findFirst()
-                .orElse(null);
+        // 채팅방 멤버 목록에서 sender 찾기
+        Set<UserSummary> members = handler.getChatRoomMembers(chatRoomId);
+        UserSummary sender = null;
+
+        if (members != null) {
+            for (UserSummary member : members) {
+                if (member.getLoginID().equals(senderLoginID)) {
+                    sender = member;
+                    break;
+                }
+            }
+        }
 
         // 디버깅용 로그
         if (sender == null) {

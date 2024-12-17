@@ -1,7 +1,7 @@
 package Server;
 
 import Model.ChatRoom;
-import Model.Friend;
+import Model.UserSummary;
 import Model.User;
 import java.io.*;
 import java.net.Socket;
@@ -104,14 +104,14 @@ public class UserHandler extends Thread {
 
     // 헬퍼 메서드: 사용자의 친구 목록에서 loginID를 가진 Friend가 있는지 확인
     private boolean hasFriend(User u, String friendLoginID) {
-        for (Friend f : u.getFriends()) {
+        for (UserSummary f : u.getFriends()) {
             if (f.getLoginID().equals(friendLoginID)) return true;
         }
         return false;
     }
 
-    private Friend friendFromUser(User u) {
-        return new Friend(u.getLoginID(), u.getUserName(), u.getInformation(), u.getProfileImage());
+    private UserSummary friendFromUser(User u) {
+        return new UserSummary(u.getLoginID(), u.getUserName(), u.getInformation(), u.getProfileImage());
     }
 
     private void handleUpdateStatus(String msg) {
@@ -143,9 +143,9 @@ public class UserHandler extends Thread {
 
     private void notifyFriendsAboutStatusChange(String newStatus) {
         // 1. 친구들에게 변경 사항 알림
-        for (Friend friend : user.getFriends()) {
-            if (ServerApp.onlineUsers.containsKey(friend.getLoginID())) {
-                ServerApp.onlineUsers.get(friend.getLoginID()).sendMessage("/statusupdate " + loginID + " " + newStatus);
+        for (UserSummary userSummary : user.getFriends()) {
+            if (ServerApp.onlineUsers.containsKey(userSummary.getLoginID())) {
+                ServerApp.onlineUsers.get(userSummary.getLoginID()).sendMessage("/statusupdate " + loginID + " " + newStatus);
             }
         }
 
@@ -182,14 +182,14 @@ public class UserHandler extends Thread {
         out.println("/profileimageupdate " + loginID + " " + base64Image);
 
         // 친구들에게 프로필 이미지 업데이트 전송
-        notifyFriendsAboutProfileImageChange(base64Image);
+        notifyFriendsAboutProfileImageChange(targetLoginID, base64Image);
     }
 
-    private void notifyFriendsAboutProfileImageChange(String base64Image) {
-        // 1. 친구들에게 변경 사항 알림
-        for (Friend friend : user.getFriends()) {
-            if (ServerApp.onlineUsers.containsKey(friend.getLoginID())) {
-                ServerApp.onlineUsers.get(friend.getLoginID()).sendMessage("/profileimageupdate " + loginID + " " + base64Image);
+    private void notifyFriendsAboutProfileImageChange(String targetLoginID, String base64Image) {
+        // 1. 친구들에게 프로필 이미지 업데이트 전송
+        for (UserSummary userSummary : user.getFriends()) {
+            if (ServerApp.onlineUsers.containsKey(userSummary.getLoginID())) {
+                ServerApp.onlineUsers.get(userSummary.getLoginID()).sendMessage("/profileimageupdate " + targetLoginID + " " + base64Image);
             }
         }
 
@@ -197,10 +197,35 @@ public class UserHandler extends Thread {
         for (Map.Entry<String, Set<String>> entry : ServerApp.friendRequests.entrySet()) {
             String targetUserLoginID = entry.getKey();
             Set<String> requesters = entry.getValue();
-            if (requesters.contains(loginID) && ServerApp.onlineUsers.containsKey(targetUserLoginID)) {
-                ServerApp.onlineUsers.get(targetUserLoginID).sendMessage("/profileimageupdate " + loginID + " " + base64Image);
+            if (requesters.contains(targetLoginID) && ServerApp.onlineUsers.containsKey(targetUserLoginID)) {
+                ServerApp.onlineUsers.get(targetUserLoginID).sendMessage("/profileimageupdate " + targetLoginID + " " + base64Image);
             }
         }
+
+        // 3. 친구는 아니지만, 동일한 채팅방에 속한 사용자들에게도 변경 사항 알림
+        Set<String> usersToNotify = new HashSet<>();
+
+        // 모든 채팅방을 순회하여 현재 사용자가 속한 채팅방 찾기
+        for (ChatRoom chatRoom : ServerApp.chatRooms.values()) {
+            if (chatRoom.getMembers().stream().anyMatch(f -> f.getLoginID().equals(targetLoginID))) {
+                for (UserSummary member : chatRoom.getMembers()) {
+                    String memberLoginID = member.getLoginID();
+                    // 자신과 친구는 제외
+                    if (!memberLoginID.equals(targetLoginID) && !user.getFriends().stream().anyMatch(f -> f.getLoginID().equals(memberLoginID))) {
+                        usersToNotify.add(memberLoginID);
+                    }
+                }
+            }
+        }
+
+        // 수집된 사용자들에게 프로필 이미지 업데이트 전송
+        for (String userLoginID : usersToNotify) {
+            if (ServerApp.onlineUsers.containsKey(userLoginID)) {
+                ServerApp.onlineUsers.get(userLoginID).sendMessage("/profileimageupdate " + targetLoginID + " " + base64Image);
+            }
+        }
+
+        System.out.println("[개발용] : " + targetLoginID + "의 프로필 이미지 업데이트가 친구 및 동일 채팅방 사용자들에게 전송되었습니다.");
     }
 
     private void handleSignup(String msg) {
@@ -307,10 +332,10 @@ public class UserHandler extends Thread {
 
     // 친구 목록 전송 처리
     private void handleGetFriends() {
-        Set<Friend> friends = user.getFriends();
+        Set<UserSummary> userSummaries = user.getFriends();
         // 직렬화하여 전송
-        out.println("/friends " + friendsListToString(friends));
-        System.out.println("[개발용] : 서버 " + user.getLoginID() + " 친구 목록 : " + friends);
+        out.println("/friends " + friendsListToString(userSummaries));
+        System.out.println("[개발용] : 서버 " + user.getLoginID() + " 친구 목록 : " + userSummaries);
     }
 
     private void handleAddFriend(String msg) {
@@ -338,25 +363,25 @@ public class UserHandler extends Thread {
 
         requests.add(loginID);
         // 요청 보낸 사용자 정보를 Friend 객체로 생성
-        Friend requesterFriend = friendFromUser(user);
+        UserSummary requesterUserSummary = friendFromUser(user);
 
         if (ServerApp.onlineUsers.containsKey(friendLoginID)) {
-            ServerApp.onlineUsers.get(friendLoginID).sendMessage("/friendrequest " + friendToString(requesterFriend));
+            ServerApp.onlineUsers.get(friendLoginID).sendMessage("/friendrequest " + friendToString(requesterUserSummary));
         }
         out.println("/addfriend success 친구 요청을 보냈습니다.");
         System.out.println("[개발용] : " + loginID + "님이 " + friendLoginID + "님에게 친구 요청을 보냈습니다.");
     }
 
-    private String friendToString(Friend f) {
+    private String friendToString(UserSummary f) {
         return f.getLoginID() + "|" + f.getUserName().replace(" ", "_") + "|"
                 + f.getInformation().replace(" ", "_") + "|"
                 + f.getProfileImage();
     }
 
-    private String friendsListToString(Set<Friend> friendsList) {
+    private String friendsListToString(Set<UserSummary> friendsList) {
         List<String> serializedFriends = new ArrayList<>();
-        for (Friend friend : friendsList) {
-            serializedFriends.add(friendToString(friend));
+        for (UserSummary userSummary : friendsList) {
+            serializedFriends.add(friendToString(userSummary));
         }
         return String.join(" ", serializedFriends);
     }
@@ -376,8 +401,8 @@ public class UserHandler extends Thread {
         requests.remove(requester);
         User requesterUser = ServerApp.userCredentials.get(requester);
 
-        Friend requesterFriend = friendFromUser(requesterUser);
-        user.addFriend(requesterFriend);
+        UserSummary requesterUserSummary = friendFromUser(requesterUser);
+        user.addFriend(requesterUserSummary);
 
         if (requesterUser != null) {
             requesterUser.addFriend(friendFromUser(user));
@@ -425,35 +450,57 @@ public class UserHandler extends Thread {
             return;
         }
         String chatRoomName = tokens[1];
-        Set<User> members = ConcurrentHashMap.newKeySet();
-        members.add(user);
+        Set<UserSummary> members = ConcurrentHashMap.newKeySet();
+        members.add(friendFromUser(user));
 
+        // 초대된 친구들의 데이터 확인 및 추가
         String[] friends = tokens[2].split(" ");
         for (String friendLoginID : friends) {
-            // 친구인지 확인
-            if (!hasFriend(user, friendLoginID)) {
-                out.println("/createchat fail " + friendLoginID + "은(는) 친구가 아닙니다.");
-                return;
-            }
-            User f = ServerApp.userCredentials.get(friendLoginID);
-            if (f != null) {
-                members.add(f);
+            User friendUser = ServerApp.userCredentials.get(friendLoginID);
+            if (friendUser != null) {
+                members.add(friendFromUser(friendUser));
             } else {
-                out.println("/createchat fail " + friendLoginID + "은(는) 존재하지 않는 사용자입니다.");
+                out.println("/createchat fail 존재하지 않는 사용자: " + friendLoginID);
                 return;
             }
         }
 
+        // 채팅방 생성 및 저장
         String chatRoomId = UUID.randomUUID().toString();
         ChatRoom chatRoom = new ChatRoom(chatRoomId, chatRoomName, members);
         ServerApp.chatRooms.put(chatRoomId, chatRoom);
-        for (User member : members) {
+
+        // 모든 멤버에게 채팅방 생성 알림
+        for (UserSummary member : members) {
             if (ServerApp.onlineUsers.containsKey(member.getLoginID())) {
-                ServerApp.onlineUsers.get(member.getLoginID()).sendMessage("/createchat " + chatRoomId + " " + chatRoomName);
+                ServerApp.onlineUsers.get(member.getLoginID())
+                        .sendMessage("/createchat " + chatRoomId + " " + chatRoomName);
             }
         }
+
+        // 기존의 간단한 성공 메시지 전송
         out.println("/createchat_success 채팅방이 생성되었습니다.");
+
+        // 멤버 데이터를 추가적으로 직렬화하여 전송
+        StringBuilder response = new StringBuilder("/createchat_members " + chatRoomId + " ");
+        for (UserSummary member : members) {
+            response.append(member.getLoginID()).append("|")
+                    .append(member.getUserName().replace(" ", "_")).append("|")
+                    .append(member.getProfileImage()).append("|")
+                    .append(member.getInformation().replace(" ", "_")).append(" ");
+        }
+
+        // 모든 멤버에게 데이터 전송
+        for (UserSummary member : members) {
+            if (ServerApp.onlineUsers.containsKey(member.getLoginID())) {
+                ServerApp.onlineUsers.get(member.getLoginID()).sendMessage(response.toString().trim());
+            }
+        }
+
+        System.out.println("[개발용] 채팅방 생성 성공: " + chatRoomId + ", 멤버: " + members);
     }
+
+
 
     private void handleGetChatHistory(String msg) {
         String[] tokens = msg.split(" ", 2);
@@ -504,7 +551,7 @@ public class UserHandler extends Thread {
 
         String formattedMessage = "/chat " + chatRoomId + " " + sender + " " + time + " " + message;
         chatRoom.addMessage(formattedMessage);
-        for (User member : chatRoom.getMembers()) {
+        for (UserSummary member : chatRoom.getMembers()) {
             if (ServerApp.onlineUsers.containsKey(member.getLoginID())) {
                 ServerApp.onlineUsers.get(member.getLoginID()).sendMessage(formattedMessage);
             }
@@ -540,7 +587,7 @@ public class UserHandler extends Thread {
         String formattedMessage = "/sendimage " + chatRoomId + " " + sender + " " + time + " " + imagePath;
         chatRoom.addMessage(formattedMessage);
 
-        for (User member : chatRoom.getMembers()) {
+        for (UserSummary member : chatRoom.getMembers()) {
             if (ServerApp.onlineUsers.containsKey(member.getLoginID())) {
                 ServerApp.onlineUsers.get(member.getLoginID()).sendMessage(formattedMessage);
             }
@@ -584,7 +631,7 @@ public class UserHandler extends Thread {
         String formattedMessage = "/sendemoji " + chatRoomId + " " + sender + " " + time + " " + emojiFilePath;
         chatRoom.addMessage(formattedMessage);
 
-        for (User member : chatRoom.getMembers()) {
+        for (UserSummary member : chatRoom.getMembers()) {
             if (ServerApp.onlineUsers.containsKey(member.getLoginID())) {
                 ServerApp.onlineUsers.get(member.getLoginID()).sendMessage(formattedMessage);
             }
@@ -670,5 +717,9 @@ public class UserHandler extends Thread {
             out.println("/memo " + i + " " + memos.get(i).replace(" ", "_"));
         }
         out.println("/memosend");
+    }
+
+    private UserSummary convertFriend(User user) {
+        return new UserSummary(user.getLoginID(), user.getUserName(), user.getInformation(), user.getProfileImage());
     }
 }

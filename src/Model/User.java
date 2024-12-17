@@ -13,7 +13,7 @@ public class User {
     private String nickname;      // 닉네임
     private String information;   // 상태 메시지
     private String profileImage;  // 프로필 이미지
-    private Set<Friend> friends;  // 친구 목록
+    private Set<UserSummary> userSummaries;  // 친구 목록
     private List<String> memos;   // 메모 목록
 
     public User(String loginID, String loginPW, String userName, String birthday, String nickname, String information) {
@@ -23,7 +23,7 @@ public class User {
         this.birthday = birthday;
         this.nickname = nickname;
         this.information = information;
-        this.friends = ConcurrentHashMap.newKeySet();
+        this.userSummaries = ConcurrentHashMap.newKeySet();
         this.memos = new CopyOnWriteArrayList<>();
     }
 
@@ -52,8 +52,8 @@ public class User {
         return information;
     }
 
-    public Set<Friend> getFriends() {
-        return friends;
+    public Set<UserSummary> getFriends() {
+        return userSummaries;
     }
 
     public List<String> getMemos() {
@@ -72,18 +72,18 @@ public class User {
         this.profileImage = profileImage;
     }
 
-    public void setFriends(Set<Friend> friends) {
-        this.friends = friends;
+    public void setFriends(Set<UserSummary> userSummaries) {
+        this.userSummaries = userSummaries;
     }
 
     // 친구 추가
-    public boolean addFriend(Friend newFriend) {
-        return friends.add(newFriend);
+    public boolean addFriend(UserSummary newUserSummary) {
+        return userSummaries.add(newUserSummary);
     }
 
     // 친구 제거
-    public boolean removeFriend(Friend oldFriend) {
-        return friends.remove(oldFriend);
+    public boolean removeFriend(UserSummary oldUserSummary) {
+        return userSummaries.remove(oldUserSummary);
     }
 
     // 메모 추가
@@ -118,7 +118,7 @@ public class User {
                 "  birthday='" + birthday + "',\n" +
                 "  nickname='" + nickname + "',\n" +
                 "  information='" + information + "',\n" +
-                "  friends=" + friends + ",\n" +
+                "  friends=" + userSummaries + ",\n" +
                 "  memos=" + memos + "\n" +
                 "}";
     }

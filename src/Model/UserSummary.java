@@ -1,12 +1,12 @@
 package Model;
 
-public class Friend {
+public class UserSummary {
     private String loginID;       // 로그인 ID
     private String userName;      // 사용자 이름
     private String information;   // 상태 메시지
     private String profileImage;  // 프로필 이미지
 
-    public Friend(String loginID, String userName, String information, String profileImage) {
+    public UserSummary(String loginID, String userName, String information, String profileImage) {
         this.loginID = loginID;
         this.userName = userName;
         this.information = information;
