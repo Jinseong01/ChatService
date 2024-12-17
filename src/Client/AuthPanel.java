@@ -44,7 +44,10 @@ public class AuthPanel extends JPanel {
         GridBagConstraints gbc = createGbc();
 
         // 제목
-        addComponent(loginPanel, gbc, 0, 0, 2, new JLabel("로그인", SwingConstants.CENTER), 20);
+        // 제목: 폰트 크기 키우기
+        JLabel titleLabel = new JLabel("로그인", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 24)); // 폰트 크기 24로 설정
+        addComponent(loginPanel, gbc, 0, 0, 2, titleLabel, 20);
 
         // ID와 PW 필드
         addField(loginPanel, gbc, "ID:", loginUserField, 1);
