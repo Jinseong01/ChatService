@@ -10,18 +10,16 @@ public class User {
     private String loginPW;       // 로그인 PW
     private String userName;      // 사용자 이름
     private String birthday;      // 생일
-    private String nickname;      // 닉네임
     private String information;   // 상태 메시지
     private String profileImage;  // 프로필 이미지
     private Set<UserSummary> userSummaries;  // 친구 목록
     private List<String> memos;   // 메모 목록
 
-    public User(String loginID, String loginPW, String userName, String birthday, String nickname, String information) {
+    public User(String loginID, String loginPW, String userName, String birthday, String information) {
         this.loginID = loginID;
         this.loginPW = loginPW;
         this.userName = userName;
         this.birthday = birthday;
-        this.nickname = nickname;
         this.information = information;
         this.userSummaries = ConcurrentHashMap.newKeySet();
         this.memos = new CopyOnWriteArrayList<>();
@@ -42,10 +40,6 @@ public class User {
 
     public String getBirthday() {
         return birthday;
-    }
-
-    public String getNickname() {
-        return nickname;
     }
 
     public String getInformation() {
@@ -116,7 +110,6 @@ public class User {
                 "  loginPW='" + loginPW + "',\n" +
                 "  userName='" + userName + "',\n" +
                 "  birthday='" + birthday + "',\n" +
-                "  nickname='" + nickname + "',\n" +
                 "  information='" + information + "',\n" +
                 "  friends=" + userSummaries + ",\n" +
                 "  memos=" + memos + "\n" +

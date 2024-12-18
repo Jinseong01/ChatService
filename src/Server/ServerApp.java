@@ -14,9 +14,9 @@ public class ServerApp {
     // 이용자 목록 : { loginID : User }
 //    public static Map<String, User> userCredentials = new ConcurrentHashMap<>();
     public static Map<String, User> userCredentials = new ConcurrentHashMap<String, User>() {{
-        put("test", new User("test", "1234", "홍길동", "2001-01-01", "닉네임", "상태메시지입력하는곳"));
-        put("tmp1", new User("tmp1", "1234", "황기태", "2001-02-21", "닉네임", "상태메시지입력하는곳"));
-        put("tmp2", new User("tmp2", "1234", "허준영", "2001-01-51", "닉네임", "상태메시지입력하는곳"));
+        put("test", new User("test", "1234", "홍길동", "2001-01-01",  "상태메시지입력하는곳"));
+        put("tmp1", new User("tmp1", "1234", "황기태", "2001-02-21",  "상태메시지입력하는곳"));
+        put("tmp2", new User("tmp2", "1234", "허준영", "2001-01-51",  "상태메시지입력하는곳"));
     }};
 
     // 현재 접속자 목록 : { loginID : ClientHandler }

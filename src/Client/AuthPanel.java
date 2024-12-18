@@ -21,7 +21,6 @@ public class AuthPanel extends JPanel {
     private JPasswordField signupLoginPWField = createSizedPasswordField();
     private JTextField signupUserNameField = createSizedTextField();
     private JTextField signupBirthdayField = createSizedTextField();
-    private JTextField signupNicknameField = createSizedTextField();
     private JTextField signupStatusMessageField = createSizedTextField(); // 상태 메시지 필드
     private JButton registerButton = createSizedButton("회원가입 완료");
 
@@ -74,7 +73,6 @@ public class AuthPanel extends JPanel {
         addField(signupPanel, gbc, "비밀번호:", signupLoginPWField, 2);
         addField(signupPanel, gbc, "사용자 이름:", signupUserNameField, 3);
         addField(signupPanel, gbc, "생일(YYYY-MM-DD):", signupBirthdayField, 4);
-        addField(signupPanel, gbc, "닉네임:", signupNicknameField, 5);
         addField(signupPanel, gbc, "상태 메시지:", signupStatusMessageField, 6);
 
         // 버튼
@@ -145,7 +143,6 @@ public class AuthPanel extends JPanel {
     public JPasswordField getSignupLoginPWField() { return signupLoginPWField; }
     public JTextField getSignupUserNameField() { return signupUserNameField; }
     public JTextField getSignupBirthdayField() { return signupBirthdayField; }
-    public JTextField getSignupNicknameField() { return signupNicknameField; }
     public JTextField getSignupStatusMessageField() { return signupStatusMessageField; }
     public JButton getRegisterButton() { return registerButton; }
 }

@@ -222,15 +222,14 @@ public class ClientUI extends JFrame {
         String pw = new String(authPanel.getSignupLoginPWField().getPassword()).trim();
         String userName = authPanel.getSignupUserNameField().getText().trim();
         String birthday = authPanel.getSignupBirthdayField().getText().trim();
-        String nickname = authPanel.getSignupNicknameField().getText().trim();
         String information = authPanel.getSignupStatusMessageField().getText().trim().replace(" ", "_");
 
-        if (id.isEmpty() || pw.isEmpty() || userName.isEmpty() || birthday.isEmpty() || nickname.isEmpty()) {
+        if (id.isEmpty() || pw.isEmpty() || userName.isEmpty() || birthday.isEmpty()) {
             JOptionPane.showMessageDialog(frame, "모든 필드를 입력하세요.");
             return;
         }
 
-        if (clientHandler != null) clientHandler.sendMessage("/signup " + id + " " + pw + " " + userName + " " + birthday + " " + nickname + " " + information);
+        if (clientHandler != null) clientHandler.sendMessage("/signup " + id + " " + pw + " " + userName + " " + birthday + " " + information);
     }
 
     private void sendFriendRequest() {

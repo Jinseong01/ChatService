@@ -52,20 +52,6 @@ public class ClientHandler {
         chatWindows.put(chatRoomId, cw);
     }
 
-    public ChatWindow getChatWindow(String chatRoomId) {
-        return chatWindows.get(chatRoomId);
-    }
-
-    // 이미지 업로드 요청
-    public void uploadImage(File imageFile) {
-        if (imageFile != null && imageFile.exists()) {
-            sendMessage("/uploadimage " + imageFile.getAbsolutePath());
-        } else {
-            SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(ui.getFrame(), "이미지 파일이 존재하지 않습니다.", "오류", JOptionPane.ERROR_MESSAGE);
-            });
-        }
-    }
 
     public void sendChatMessage(String chatRoomId, String message) {
         String time = new SimpleDateFormat("HH:mm").format(new Date());
@@ -279,20 +265,6 @@ public class ClientHandler {
             }
         }
 
-//        private void handleEmojiMessage(String msg) {
-//            String[] tokens = msg.split(" ", 4); // chatRoomId 추가
-//            if (tokens.length == 4) {
-//                String chatRoomId = tokens[1];  // 채팅방 ID
-//                String senderLoginID = tokens[2];  // 보낸 사람의 ID
-//                String emojiFileName = tokens[3]; // 이모티콘 파일 이름
-//
-//                ChatWindow cw = chatWindows.get(chatRoomId); // 특정 채팅창 가져오기
-//                if (cw != null) {
-//                    SwingUtilities.invokeLater(() -> cw.appendEmoji(senderLoginID, emojiFileName));
-//                }
-//            }
-//        }
-
         private void handleCheckOnlineResponse(String msg) {
             String[] tokens = msg.split(" ");
             if (tokens.length < 2) {
@@ -323,21 +295,20 @@ public class ClientHandler {
         }
 
         private void handleLoginResponse(String msg) {
-            String[] tokens = msg.split(" ", 9);
+            String[] tokens = msg.split(" ", 8);
 
-            if (tokens.length < 9) return;
+            if (tokens.length < 8) return;
 
             if (tokens[1].equals("success")) {
                 String loginID = tokens[2];
                 String loginPW = tokens[3];
                 String userName = tokens[4];
                 String birthday = tokens[5];
-                String nickname = tokens[6];
-                String information = tokens[7];
-                String profileImage = tokens[8];
+                String information = tokens[6];
+                String profileImage = tokens[7];
 
                 // loginUser 객체 생성
-                loginUser = new User(loginID, loginPW, userName, birthday, nickname, information);
+                loginUser = new User(loginID, loginPW, userName, birthday, information);
                 loginUser.setProfileImage(profileImage);
 
                 System.out.println("[개발용] : " + loginUser);

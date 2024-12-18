@@ -231,8 +231,8 @@ public class UserHandler extends Thread {
     }
 
     private void handleSignup(String msg) {
-        String[] tokens = msg.split(" ", 7);
-        if (tokens.length != 7) {
+        String[] tokens = msg.split(" ", 6);
+        if (tokens.length != 6) {
             out.println("/signup fail 잘못된 형식입니다.");
             return;
         }
@@ -240,8 +240,7 @@ public class UserHandler extends Thread {
         String loginPW = tokens[2];
         String userName = tokens[3];
         String birthday = tokens[4];
-        String nickname = tokens[5];
-        String information = tokens[6].replace("_", " ");
+        String information = tokens[5].replace("_", " ");
 
         // 생일 형식 확인 (정규식: YYYY-MM-DD)
         if (!birthday.matches("\\d{4}-\\d{2}-\\d{2}")) {
@@ -253,7 +252,7 @@ public class UserHandler extends Thread {
         if (ServerApp.userCredentials.containsKey(userLoginID)) {
             out.println("/signup fail 이미 존재하는 사용자입니다.");
         } else {
-            User newUser = new User(userLoginID, loginPW, userName, birthday, nickname, information);
+            User newUser = new User(userLoginID, loginPW, userName, birthday, information);
             ServerApp.userCredentials.put(userLoginID, newUser);
             ServerApp.friendRequests.put(userLoginID, ConcurrentHashMap.newKeySet());
             out.println("/signup success");
@@ -288,12 +287,11 @@ public class UserHandler extends Thread {
                 user.setProfileImage(base64Image);
             }
 
-            String successMsg = String.format("/login success %s %s %s %s %s %s %s",
+            String successMsg = String.format("/login success %s %s %s %s %s %s",
                     user.getLoginID(),
                     user.getLoginPW(),
                     user.getUserName(),
                     user.getBirthday(),
-                    user.getNickname(),
                     user.getInformation(),
                     user.getProfileImage()
             );
