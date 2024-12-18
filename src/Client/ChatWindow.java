@@ -48,6 +48,8 @@ public class ChatWindow extends JFrame {
         chatArea.setContentType("text/plain");
         chatArea.setText("");
         chatArea.setCaretPosition(chatArea.getDocument().getLength());
+        chatScrollPane.setBorder(BorderFactory.createEmptyBorder());
+        chatArea.setBackground(new Color(186, 206, 224));
 
         JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
         inputPanel.add(inputField, BorderLayout.CENTER);

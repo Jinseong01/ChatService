@@ -194,7 +194,7 @@ public class FriendsPanel extends JPanel {
             statusMessageLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
             statusMessageLabel.setForeground(Color.GRAY);
             statusMessageLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-            statusMessageLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10)); // 오른쪽 여백 추가
+            statusMessageLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
 
             add(leftPanel, BorderLayout.WEST);
             add(statusMessageLabel, BorderLayout.EAST);

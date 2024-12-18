@@ -44,7 +44,7 @@ public class AdditionalOptionsWindow extends JFrame {
 
         // 중앙: 미리보기/입력 영역
         JPanel previewPanel = new JPanel(new BorderLayout());
-        previewPanel.setBorder(BorderFactory.createTitledBorder("미리보기"));
+        previewPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         previewLabel = new JLabel("", SwingConstants.CENTER);
         memoTextArea = new JTextArea(5, 20);
         memoTextArea.setVisible(false); // 초기에는 숨김
@@ -217,6 +217,7 @@ public class AdditionalOptionsWindow extends JFrame {
                     clientHandler.saveMemo(memoContent); // ClientHandler에 메모 저장 요청
                     JOptionPane.showMessageDialog(this, "메모가 저장되었습니다.", "성공", JOptionPane.INFORMATION_MESSAGE);
                     memoTextArea.setText(""); // 입력 필드 초기화
+                    dispose(); // 창 닫기
                 }
             });
         });
