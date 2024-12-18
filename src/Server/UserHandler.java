@@ -378,10 +378,19 @@ public class UserHandler extends Thread {
                 + f.getProfileImage();
     }
 
-    private String friendsListToString(Set<UserSummary> friendsList) {
+    private String friendsListToString(Set<UserSummary> friends) {
         List<String> serializedFriends = new ArrayList<>();
-        for (UserSummary userSummary : friendsList) {
-            serializedFriends.add(friendToString(userSummary));
+        // 항상 최신 정보를 가져오기 위해, friend의 loginID를 기반으로 ServerApp.userCredentials에서 User를 다시 조회
+        for (UserSummary f : friends) {
+            User freshUser = ServerApp.userCredentials.get(f.getLoginID());
+            // freshUser에서 항상 최신 정보 기반으로 UserSummary 생성
+            UserSummary updatedSummary = new UserSummary(
+                    freshUser.getLoginID(),
+                    freshUser.getUserName(),
+                    freshUser.getInformation(),
+                    freshUser.getProfileImage()
+            );
+            serializedFriends.add(friendToString(updatedSummary));
         }
         return String.join(" ", serializedFriends);
     }
@@ -412,8 +421,11 @@ public class UserHandler extends Thread {
         System.out.println("[개발용] : " + loginID + "님과 " + requester + "님이 친구가 되었습니다.");
 
         if (ServerApp.onlineUsers.containsKey(requester)) {
-            ServerApp.onlineUsers.get(requester).sendMessage("/friendaccepted " + friendsListToString(user.getFriends()));
-            // 친구의 최신 친구 목록을 동기화
+            // 방금 친구가 된 'user' (수락한 사람)의 정보만 전송
+            UserSummary acceptedFriendSummary = friendFromUser(user);
+            ServerApp.onlineUsers.get(requester).sendMessage("/friendaccepted " + friendToString(acceptedFriendSummary));
+
+            // 친구의 최신 친구 목록을 별도의 /friends 명령으로 전송
             ServerApp.onlineUsers.get(requester).sendMessage("/friends " + friendsListToString(requesterUser.getFriends()));
         }
 
