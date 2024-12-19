@@ -127,10 +127,20 @@ public class AuthPanel extends JPanel {
 
     public void showLoginPanel() {
         cardLayout.show(this, "login");
+        resetLoginButton();
     }
 
     public void showSignupPanel() {
         cardLayout.show(this, "signup");
+        resetSignupButton();
+    }
+
+    private void resetLoginButton() {
+        loginButton.setEnabled(true);
+    }
+
+    private void resetSignupButton() {
+        registerButton.setEnabled(true);
     }
 
     // Getters

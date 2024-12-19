@@ -14,9 +14,9 @@ public class ServerApp {
     // 이용자 목록 : { loginID : User }
 //    public static Map<String, User> userCredentials = new ConcurrentHashMap<>();
     public static Map<String, User> userCredentials = new ConcurrentHashMap<String, User>() {{
-        put("test", new User("test", "1234", "홍길동", "2001-01-01",  "상태메시지입력하는곳"));
-        put("tmp1", new User("tmp1", "1234", "황기태", "2001-02-21",  "상태메시지입력하는곳"));
-        put("tmp2", new User("tmp2", "1234", "허준영", "2001-01-51",  "상태메시지입력하는곳"));
+        put("test", new User("test", "1234", "짱구", "2001-01-01",  "허허이"));
+        put("tmp1", new User("tmp1", "1234", "철수", "2001-02-21",  "학원..."));
+        put("tmp2", new User("tmp2", "1234", "유리", "2001-01-51",  "인형"));
     }};
 
     // 현재 접속자 목록 : { loginID : ClientHandler }
@@ -44,8 +44,8 @@ public class ServerApp {
         friendRequests.put("tmp2", ConcurrentHashMap.newKeySet());
 
         // test 계정에 기본 메모 추가
-        testUser.getMemos().add("기본 메모 1");
-        testUser.getMemos().add("기본 메모 2");
+        testUser.getMemos().add("내일 유치원에서 술래잡기");
+        testUser.getMemos().add("친구들과 약속");
     }
 
     public static void main(String[] args) {

@@ -229,7 +229,15 @@ public class ClientUI extends JFrame {
             return;
         }
 
-        if (clientHandler != null) clientHandler.sendMessage("/signup " + id + " " + pw + " " + userName + " " + birthday + " " + information);
+        if (clientHandler != null) {
+            clientHandler.sendMessage("/signup " + id + " " + pw + " " + userName + " " + birthday + " " + information);
+
+            // 서버 응답 처리
+            SwingUtilities.invokeLater(() -> {
+                // 회원가입 실패를 가정하고 버튼만 초기화
+                authPanel.getRegisterButton().setEnabled(true);
+            });
+        }
     }
 
     private void sendFriendRequest() {
