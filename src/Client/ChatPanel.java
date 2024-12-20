@@ -8,6 +8,7 @@ public class ChatPanel extends JPanel {
     private JList<String> chatRoomsListUI = new JList<>(chatRoomsListModel);
     private JButton createChatButton = new JButton("+"); // 채팅방 생성 버튼
 
+    // 상단 배너 및 채팅방 목록 UI 초기화
     public ChatPanel() {
         setLayout(new BorderLayout());
 

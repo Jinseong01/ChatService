@@ -15,10 +15,11 @@ public class AdditionalOptionsWindow extends JFrame {
     private ClientHandler clientHandler; // ClientHandler 참조
     private String chatRoomId; // 채팅방 ID
 
-    // 이모티콘 디렉토리 설정
+    // 이모티콘 디렉토리 경로 설정
     private static final String EMOJI_DIRECTORY = "src/Resources/emojis";
     private JLabel selectedEmojiLabel; // 선택된 이모티콘
 
+    // 윈도우 초기 설정 및 UI 컴포넌트 배치
     public AdditionalOptionsWindow(ClientHandler handler, String chatRoomId) {
         this.clientHandler = handler; // ClientHandler 연결
         this.chatRoomId = chatRoomId;
@@ -68,6 +69,7 @@ public class AdditionalOptionsWindow extends JFrame {
         imageButton.doClick();
     }
 
+    // 상단 버튼(이미지, 이모티콘, 메모)에 대한 액션 설정
     private void setButtonActions(JButton imageButton, JButton emojiButton, JButton memoButton, JPanel previewPanel) {
         // 이미지 버튼 클릭 시
         imageButton.addActionListener(e -> {
@@ -223,6 +225,7 @@ public class AdditionalOptionsWindow extends JFrame {
         });
     }
 
+    // 미리보기 상태 초기화
     private void resetPreview() {
         previewLabel.setText("");
         previewLabel.setIcon(null);
@@ -230,6 +233,7 @@ public class AdditionalOptionsWindow extends JFrame {
         memoTextArea.setVisible(false);
     }
 
+    // 선택/전송/저장 버튼의 액션 리스너를 교체하는 헬퍼 메서드
     private void replaceButtonAction(JButton button, java.awt.event.ActionListener newAction) {
         for (java.awt.event.ActionListener al : button.getActionListeners()) {
             button.removeActionListener(al);

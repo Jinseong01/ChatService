@@ -10,10 +10,11 @@ public class MemoPanel extends JPanel {
     private JButton editMemoButton = new JButton("메모 수정");
     private JButton deleteMemoButton = new JButton("메모 삭제");
 
+    // 레이아웃 및 UI 초기화
     public MemoPanel() {
         setLayout(new BorderLayout());
 
-        // 상단 배너
+        // 상단 배너 패널 구성
         JPanel bannerPanel = new JPanel(new BorderLayout());
         JLabel bannerLabel = new JLabel("메모", SwingConstants.LEFT); // 배너 제목
         bannerLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
@@ -31,21 +32,21 @@ public class MemoPanel extends JPanel {
         memoListPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
         memoListPanel.add(new JScrollPane(memoListUI), BorderLayout.CENTER);
 
-        // 메모 관리 버튼
+        // 메모 수정/삭제 버튼 패널
         JPanel memoButtons = new JPanel(new GridLayout(1, 2, 5, 5));
         memoButtons.add(editMemoButton);
         memoButtons.add(deleteMemoButton);
         memoListPanel.add(memoButtons, BorderLayout.SOUTH);
 
-        // Custom Renderer 설정: 메모 내용만 보이도록
+        // Custom Renderer 설정 (메모 내용만 표시)
         memoListUI.setCellRenderer(new MemoCellRenderer());
 
-        // 전체 구성
+        // 전체 패널 구성
         add(bannerPanel, BorderLayout.PAGE_START); // 상단 배너 추가
         add(memoListPanel, BorderLayout.CENTER);  // 메모 목록 추가
     }
 
-    // Getter 메서드들
+    // Getter 메서드들: 외부에서 모델, UI 컴포넌트 접근 가능
     public DefaultListModel<String> getMemoListModel() {
         return memoListModel;
     }
@@ -66,26 +67,27 @@ public class MemoPanel extends JPanel {
         return deleteMemoButton;
     }
 
-    // Custom Cell Renderer 클래스
+    // 메모 항목 Custom Cell Renderer 클래스
     private static class MemoCellRenderer extends DefaultListCellRenderer {
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            // 기본 렌더러로 JLabel 생성
             JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             String memo = value.toString();
 
-            // 인덱스를 제거하고 메모 내용만 표시 (기존 데이터를 가공)
+            // "] " 이후의 문자열만 표시하여 인덱스 제거
             if (memo.contains("] ")) {
                 memo = memo.substring(memo.indexOf("] ") + 2);
             }
 
-            label.setText(memo); // 가공된 메모 내용 설정
-            label.setFont(new Font("SansSerif", Font.PLAIN, 16)); // 폰트 크기 설정
+            label.setText(memo);
+            label.setFont(new Font("SansSerif", Font.PLAIN, 16));
             label.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createEmptyBorder(10, 10, 10, 10), // 패딩 추가
-                    BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY) // 경계선 추가
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY) // 하단 경계선 추가
             ));
             label.setOpaque(true); // 배경색을 변경하려면 필요
-            label.setBackground(isSelected ? new Color(220, 240, 255) : Color.WHITE); // 선택된 항목 배경색
+            label.setBackground(isSelected ? new Color(220, 240, 255) : Color.WHITE);
             return label;
         }
     }

@@ -20,6 +20,7 @@ public class UserHandler extends Thread {
     private String loginID;
     private User user;
 
+    // 소켓을 받아 Input/Output 스트림을 초기화
     public UserHandler(Socket socket) {
         this.socket = socket;
         try {
@@ -31,10 +32,12 @@ public class UserHandler extends Thread {
         }
     }
 
+    // 서버 -> 클라이언트로 메시지 전송
     public void sendMessage(String msg) {
         out.println(msg);
     }
 
+    // 스레드 실행 메서드: 클라이언트로부터 명령어를 읽어들이고 처리하는 메인 루프
     @Override
     public void run() {
         try {
@@ -47,6 +50,7 @@ public class UserHandler extends Thread {
                 }
                 System.out.println("[수신] : " + msg);
 
+                // 명령어별 처리
                 if (msg.startsWith("/signup")) {
                     handleSignup(msg);
                 } else if (msg.startsWith("/login")) {
@@ -92,6 +96,7 @@ public class UserHandler extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
+            // 연결 종료 시 처리(온라인 목록에서 제거)
             if (loginID != null) {
                 ServerApp.onlineUsers.remove(loginID);
                 System.out.println("[개발용] : " + loginID + " 로그아웃");
@@ -112,10 +117,12 @@ public class UserHandler extends Thread {
         return false;
     }
 
+    // User 객체로부터 UserSummary 객체를 생성
     private UserSummary friendFromUser(User u) {
         return new UserSummary(u.getLoginID(), u.getUserName(), u.getInformation(), u.getProfileImage());
     }
 
+    // 상태 메시지 업데이트 처리
     private void handleUpdateStatus(String msg) {
         String[] tokens = msg.split(" ", 3);
         if (tokens.length != 3) {
@@ -131,27 +138,25 @@ public class UserHandler extends Thread {
             return;
         }
 
-        // 상태 메시지 업데이트
         user.setInformation(newStatus);
 
-        // 변경된 상태 메시지를 현재 사용자에게 전송
         out.println("/updatestatus success");
         System.out.println("[개발용] : " + loginID + "의 상태메시지 변경 성공: " + newStatus);
         out.println("/statusupdate " + loginID + " " + newStatus);
 
-        // 친구들에게 상태 업데이트 전송
         notifyFriendsAboutStatusChange(newStatus);
     }
 
+    // 친구 및 친구 요청자에게 상태 메시지 변경 알림
     private void notifyFriendsAboutStatusChange(String newStatus) {
-        // 1. 친구들에게 변경 사항 알림
+        // 친구들에게 변경 사항 알림
         for (UserSummary userSummary : user.getFriends()) {
             if (ServerApp.onlineUsers.containsKey(userSummary.getLoginID())) {
                 ServerApp.onlineUsers.get(userSummary.getLoginID()).sendMessage("/statusupdate " + loginID + " " + newStatus);
             }
         }
 
-        // 2. 자신을 친구 요청 목록에 보유한 사용자들에게도 변경 사항 알림
+        // 자신을 친구 요청 목록에 보유한 사용자들에게도 변경 사항 알림
         for (Map.Entry<String, Set<String>> entry : ServerApp.friendRequests.entrySet()) {
             String targetUserLoginID = entry.getKey();
             Set<String> requesters = entry.getValue();
@@ -161,6 +166,7 @@ public class UserHandler extends Thread {
         }
     }
 
+    // 프로필 이미지 업데이트 처리
     private void handleUpdateProfileImage(String msg) {
         String[] tokens = msg.split(" ", 3);
         if (tokens.length != 3) {
@@ -179,23 +185,22 @@ public class UserHandler extends Thread {
         // 프로필 이미지 업데이트
         user.setProfileImage(base64Image);
         System.out.println("[개발용] : " + loginID + "의 프로필 이미지 변경 성공");
-
-        // 변경된 프로필 이미지를 현재 사용자에게 전송
         out.println("/profileimageupdate " + loginID + " " + base64Image);
 
         // 친구들에게 프로필 이미지 업데이트 전송
         notifyFriendsAboutProfileImageChange(targetLoginID, base64Image);
     }
 
+    // 프로필 이미지 변경을 친구, 요청자, 동일 채팅방 사용자들에게 알림
     private void notifyFriendsAboutProfileImageChange(String targetLoginID, String base64Image) {
-        // 1. 친구들에게 프로필 이미지 업데이트 전송
+        // 친구들에게 알림
         for (UserSummary userSummary : user.getFriends()) {
             if (ServerApp.onlineUsers.containsKey(userSummary.getLoginID())) {
                 ServerApp.onlineUsers.get(userSummary.getLoginID()).sendMessage("/profileimageupdate " + targetLoginID + " " + base64Image);
             }
         }
 
-        // 2. 자신을 친구 요청 목록에 보유한 사용자들에게도 변경 사항 알림
+        // 자신을 친구 요청 목록에 보유한 사용자들에게도 변경 사항 알림
         for (Map.Entry<String, Set<String>> entry : ServerApp.friendRequests.entrySet()) {
             String targetUserLoginID = entry.getKey();
             Set<String> requesters = entry.getValue();
@@ -204,7 +209,7 @@ public class UserHandler extends Thread {
             }
         }
 
-        // 3. 친구는 아니지만, 동일한 채팅방에 속한 사용자들에게도 변경 사항 알림
+        // 친구는 아니지만, 동일한 채팅방에 속한 사용자들에게도 변경 사항 알림
         Set<String> usersToNotify = new HashSet<>();
 
         // 모든 채팅방을 순회하여 현재 사용자가 속한 채팅방 찾기
@@ -230,6 +235,7 @@ public class UserHandler extends Thread {
         System.out.println("[개발용] : " + targetLoginID + "의 프로필 이미지 업데이트가 친구 및 동일 채팅방 사용자들에게 전송되었습니다.");
     }
 
+    // 회원가입 처리
     private void handleSignup(String msg) {
         String[] tokens = msg.split(" ", 6);
         if (tokens.length != 6) {
@@ -260,6 +266,7 @@ public class UserHandler extends Thread {
         }
     }
 
+    // 로그인 처리
     private void handleLogin(String msg) throws IOException {
         String[] tokens = msg.split(" ", 3);
         if (tokens.length != 3) {
@@ -280,6 +287,7 @@ public class UserHandler extends Thread {
             this.user = ServerApp.userCredentials.get(userLoginID);
             ServerApp.onlineUsers.put(userLoginID, this);
 
+            // 프로필 이미지가 없을 경우 기본 이미지 설정
             if(user.getProfileImage()==null) {
                 Path imagePath = Paths.get("src", "Resources", "images", "BasicProfile.jpg");
                 byte[] imageBytes = Files.readAllBytes(imagePath);
@@ -304,6 +312,7 @@ public class UserHandler extends Thread {
         }
     }
 
+    // 특정한 사용자들이 온라인인지 확인하는 명령 처리
     private void handleCheckOnline(String msg) {
         String[] tokens = msg.split(" ");
         if (tokens.length < 3) { // chatRoomName + 최소 1명의 친구 필요
@@ -333,11 +342,11 @@ public class UserHandler extends Thread {
     // 친구 목록 전송 처리
     private void handleGetFriends() {
         Set<UserSummary> userSummaries = user.getFriends();
-        // 직렬화하여 전송
         out.println("/friends " + friendsListToString(userSummaries));
         System.out.println("[개발용] : 서버 " + user.getLoginID() + " 친구 목록 : " + userSummaries);
     }
 
+    // 친구 추가 요청 처리
     private void handleAddFriend(String msg) {
         String[] tokens = msg.split(" ", 2);
         if (tokens.length != 2) {
@@ -372,12 +381,14 @@ public class UserHandler extends Thread {
         System.out.println("[개발용] : " + loginID + "님이 " + friendLoginID + "님에게 친구 요청을 보냈습니다.");
     }
 
+    // UserSummary를 문자열로 직렬화
     private String friendToString(UserSummary f) {
         return f.getLoginID() + "|" + f.getUserName().replace(" ", "_") + "|"
                 + f.getInformation().replace(" ", "_") + "|"
                 + f.getProfileImage();
     }
 
+    // 친구 목록 Set을 직렬화하여 문자열로 반환
     private String friendsListToString(Set<UserSummary> friends) {
         List<String> serializedFriends = new ArrayList<>();
         // 항상 최신 정보를 가져오기 위해, friend의 loginID를 기반으로 ServerApp.userCredentials에서 User를 다시 조회
@@ -395,6 +406,7 @@ public class UserHandler extends Thread {
         return String.join(" ", serializedFriends);
     }
 
+    // 친구 요청 수락 처리
     private void handleAcceptFriend(String msg) {
         String[] tokens = msg.split(" ", 2);
         if (tokens.length != 2) {
@@ -435,6 +447,7 @@ public class UserHandler extends Thread {
         System.out.println("[개발용] : 서버 "+ requesterUser.getLoginID() + "의 친구 목록 : " + requesterUser.getFriends());
     }
 
+    // 친구 요청 거절 처리
     private void handleRejectFriend(String msg) {
         String[] tokens = msg.split(" ", 2);
         if (tokens.length != 2) {
@@ -455,6 +468,7 @@ public class UserHandler extends Thread {
         }
     }
 
+    // 채팅방 생성 처리
     private void handleCreateChat(String msg) {
         String[] tokens = msg.split(" ", 3);
         if (tokens.length < 3) {
@@ -482,7 +496,6 @@ public class UserHandler extends Thread {
         ChatRoom chatRoom = new ChatRoom(chatRoomId, chatRoomName, members);
         ServerApp.chatRooms.put(chatRoomId, chatRoom);
 
-        // 모든 멤버에게 채팅방 생성 알림
         for (UserSummary member : members) {
             if (ServerApp.onlineUsers.containsKey(member.getLoginID())) {
                 ServerApp.onlineUsers.get(member.getLoginID())
@@ -512,8 +525,7 @@ public class UserHandler extends Thread {
         System.out.println("[개발용] 채팅방 생성 성공: " + chatRoomId + ", 멤버: " + members);
     }
 
-
-
+    // 채팅 이력 요청 처리
     private void handleGetChatHistory(String msg) {
         String[] tokens = msg.split(" ", 2);
         if (tokens.length != 2) {
@@ -539,6 +551,7 @@ public class UserHandler extends Thread {
         out.println("/chathistoryend " + chatRoomId);
     }
 
+    // 일반 채팅 메시지 처리
     private void handleChat(String msg) {
         String[] tokens = msg.split(" ", 5);
         if (tokens.length != 5) {
@@ -570,6 +583,7 @@ public class UserHandler extends Thread {
         }
     }
 
+    // 이미지 전송 처리
     private void handleSendImage(String msg) {
         System.out.println("수신한 sendimage 명령어: [" + msg + "]");
         String[] tokens = msg.split(" ", 5);
@@ -631,6 +645,7 @@ public class UserHandler extends Thread {
         }
     }
 
+    // 이모티콘 전송 처리
     private void handleSendEmoji(String msg) {
         System.out.println("[개발용] : 수신한 sendemoji 명령어: [" + msg + "]");
         String[] tokens = msg.split(" ", 5);
@@ -675,11 +690,13 @@ public class UserHandler extends Thread {
         System.out.println("[개발용] : sendemoji 성공: " + formattedMessage);
     }
 
+    // 로그아웃 처리
     private void handleLogout() {
         ServerApp.onlineUsers.remove(loginID);
         out.println("/logout success 로그아웃 되었습니다.");
     }
 
+    // 메모 추가 처리
     private void handleAddMemo(String msg) {
         String[] tokens = msg.split(" ", 2);
         if (tokens.length != 2) {
@@ -691,6 +708,7 @@ public class UserHandler extends Thread {
         out.println("/addmemo success");
     }
 
+    // 메모 수정 처리
     private void handleEditMemo(String msg) {
         String[] tokens = msg.split(" ", 3);
         if (tokens.length != 3) {
@@ -713,6 +731,7 @@ public class UserHandler extends Thread {
         }
     }
 
+    // 메모 삭제 처리
     private void handleDeleteMemo(String msg) {
         String[] tokens = msg.split(" ", 2);
         if (tokens.length != 2) {
@@ -734,6 +753,7 @@ public class UserHandler extends Thread {
         }
     }
 
+    // 메모 목록 조회 처리
     private void handleGetMemos(String msg) {
         String[] tokens = msg.split(" ", 2);
         if (tokens.length != 2) {
@@ -752,9 +772,5 @@ public class UserHandler extends Thread {
             out.println("/memo " + i + " " + memos.get(i).replace(" ", "_"));
         }
         out.println("/memosend");
-    }
-
-    private UserSummary convertFriend(User user) {
-        return new UserSummary(user.getLoginID(), user.getUserName(), user.getInformation(), user.getProfileImage());
     }
 }

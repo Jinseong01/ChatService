@@ -25,10 +25,12 @@ public class ClientHandler {
     // 채팅방ID -> 채팅방 멤버 Set<Friend>
     private Map<String, Set<UserSummary>> chatRoomMembers = new HashMap<>();
 
+    // UI 객체를 받아 클라이언트와 UI 연결
     public ClientHandler(ClientUI ui) {
         this.ui = ui;
     }
 
+    // 서버에 연결 시도
     public void connectToServer(String serverAddress, int serverPort) {
         this.serverAddress = serverAddress;
         this.serverPort = serverPort;
@@ -44,15 +46,18 @@ public class ClientHandler {
         }
     }
 
+    // 서버로 메시지 전송
     public void sendMessage(String message) {
         if (out != null) out.println(message);
     }
 
+    // 채팅창 등록
     public void addChatWindow(String chatRoomId, ChatWindow cw) {
         chatWindows.put(chatRoomId, cw);
     }
 
 
+    // 채팅 메시지 전송
     public void sendChatMessage(String chatRoomId, String message) {
         String time = new SimpleDateFormat("HH:mm").format(new Date());
         // 형식: /chat chatRoomId senderLoginID time message
@@ -91,6 +96,7 @@ public class ClientHandler {
         }
     }
 
+    // 이미지 전송
     public void sendImage(String chatRoomId, String imagePath) {
         File imageFile = new File(imagePath);
 
@@ -120,12 +126,13 @@ public class ClientHandler {
         }
     }
 
+    // 프로필 이미지 업데이트 요청
     public void updateProfileImage(String base64Image) {
-        // 형식: /updateprofileimage loginID base64ImageData
         String command = "/updateprofileimage " + loginUser.getLoginID() + " " + base64Image;
         sendMessage(command);
     }
 
+    // 상태 메시지 업데이트 요청
     public void updateStatusMessage(String newStatus) {
         if (loginUser == null) {
             SwingUtilities.invokeLater(() -> {
@@ -134,19 +141,21 @@ public class ClientHandler {
             return;
         }
 
-        // /updatestatus loginID newStatus
         String command = "/updatestatus " + loginUser.getLoginID() + " " + newStatus;
         sendMessage(command);
     }
 
+    // 현재 로그인한 사용자 반환
     public User getLoginUser() {
         return loginUser;
     }
 
+    // 특정 채팅방의 멤버 목록 반환
     public Set<UserSummary> getChatRoomMembers(String chatRoomId) {
         return chatRoomMembers.get(chatRoomId);
     }
 
+    // 서버로부터 수신한 메시지를 처리하는 Listener 스레드
     private class Listener implements Runnable {
         @Override
         public void run() {
@@ -154,6 +163,7 @@ public class ClientHandler {
                 String msg;
                 while ((msg = in.readLine()) != null) {
                     System.out.println("[서버 메시지] : " + msg);
+                    // 명령어별 처리
                     if (msg.startsWith("/chathistorystart ")) {
                         String[] tokens = msg.split(" ", 2);
                         String chatRoomId = tokens[1];
@@ -265,6 +275,7 @@ public class ClientHandler {
             }
         }
 
+        // 서버로부터 받은 응답 처리 메서드들 (각 명령어 별로 로직 정의)
         private void handleCheckOnlineResponse(String msg) {
             String[] tokens = msg.split(" ");
             if (tokens.length < 2) {
@@ -592,7 +603,7 @@ public class ClientHandler {
         }
     }
 
-    // 채팅방 멤버 데이터를 파싱하여 저장
+    // 채팅방 멤버 데이터 처리
     private void handleCreateChatMembers(String msg) {
         String[] tokens = msg.split(" ", 3);
         if (tokens.length < 3) return;
@@ -606,7 +617,7 @@ public class ClientHandler {
         System.out.println("[개발용] 채팅방 멤버 저장 완료: " + chatRoomId);
     }
 
-    // 기존 멤버 파싱 메서드 재사용
+    // 채팅방 멤버 문자열을 파싱하여 UserSummary 집합으로 변환
     private Set<UserSummary> parseChatRoomMembers(String membersData) {
         Set<UserSummary> members = new HashSet<>();
         String[] memberList = membersData.split(" ");

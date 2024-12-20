@@ -34,6 +34,7 @@ public class ChatWindow extends JFrame {
     // 프로필 이미지 캐싱
     private Map<String, ImageIcon> profileImageCache = new HashMap<>();
 
+    // 채팅창 초기화
     public ChatWindow(String loginID, String chatRoomId, String chatRoomName, ClientHandler handler) {
         this.loginID = loginID;
         this.chatRoomId = chatRoomId;
@@ -44,6 +45,7 @@ public class ChatWindow extends JFrame {
         setSize(400, 600);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
+        // 채팅 영역 설정
         chatArea.setEditable(false);
         chatArea.setContentType("text/plain");
         chatArea.setText("");
@@ -51,6 +53,7 @@ public class ChatWindow extends JFrame {
         chatScrollPane.setBorder(BorderFactory.createEmptyBorder());
         chatArea.setBackground(new Color(186, 206, 224));
 
+        // 입력 패널: 입력 필드, 전송 버튼, 추가 옵션 버튼
         JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
         inputPanel.add(inputField, BorderLayout.CENTER);
         inputPanel.add(sendButton, BorderLayout.EAST);
@@ -66,6 +69,7 @@ public class ChatWindow extends JFrame {
             }
         });
 
+        // 메인 패널 구성
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         mainPanel.add(chatScrollPane, BorderLayout.CENTER);
@@ -73,16 +77,19 @@ public class ChatWindow extends JFrame {
 
         add(mainPanel);
 
+        // 전송 버튼 액션: 메시지 전송
         sendButton.addActionListener(e -> sendMessage());
         requestChatHistory();
     }
 
+    // 채팅 이력 서버에 요청
     private void requestChatHistory() {
         if (handler != null) {
             handler.sendMessage("/getchathistory " + chatRoomId);
         }
     }
 
+    // 입력된 메시지를 서버로 전송
     private void sendMessage() {
         String message = inputField.getText().trim();
         if (message.isEmpty()) return;
@@ -91,10 +98,11 @@ public class ChatWindow extends JFrame {
         inputField.setText("");
     }
 
+    // 서버로부터 수신한 채팅 메시지를 처리
     public void handleChatMessage(String msg) {
         SwingUtilities.invokeLater(() -> {
             System.out.println("[개발용] : 수신된 메시지: " + msg);
-
+            // 이모티콘 처리
             if (msg.startsWith("[이모티콘] ")) {
                 String[] tokens = msg.split(" ", 4);
                 if (tokens.length == 4) {
@@ -120,11 +128,13 @@ public class ChatWindow extends JFrame {
         });
     }
 
+    // 채팅 이력 수신 시작 시 호출
     public void handleChatHistoryStart() {
         receivingHistory = true;
         tempChatHistory.clear();
     }
 
+    // 채팅 이력 수신 종료 시 호출
     public void handleChatHistoryEnd() {
         receivingHistory = false;
         for (String chat : tempChatHistory) {
@@ -136,6 +146,7 @@ public class ChatWindow extends JFrame {
         tempChatHistory.clear();
     }
 
+    // 특정 발신자의 프로필 이미지(Base64)와 표시 이름을 반환
     private String[] getSenderProfile(String senderLoginID) {
         String base64Image;
         String senderStyle;
@@ -183,6 +194,7 @@ public class ChatWindow extends JFrame {
         return new String[]{base64Image, senderStyle};
     }
 
+    // 프로필 이미지를 캐시하여 ImageIcon으로 반환
     private ImageIcon getProfileImage(String loginID, String base64Image) {
         if (profileImageCache.containsKey(loginID)) {
             return profileImageCache.get(loginID);
@@ -193,6 +205,7 @@ public class ChatWindow extends JFrame {
         }
     }
 
+    // 일반 메시지를 채팅 영역에 추가
     private void appendMessage(String senderLoginID, String time, String message) {
         String alignment = senderLoginID.equals(loginID) ? "right" : "left";
 
@@ -230,6 +243,7 @@ public class ChatWindow extends JFrame {
         chatArea.setCaretPosition(doc.getLength());
     }
 
+    // 이미지 메시지를 채팅 영역에 추가
     protected void appendImage(String senderLoginID, String time, String base64ImageData) {
         System.out.println("[개발용] : appendImage 호출됨: senderLoginID=" + senderLoginID);
 
@@ -279,6 +293,7 @@ public class ChatWindow extends JFrame {
         chatArea.setCaretPosition(chatArea.getDocument().getLength());
     }
 
+    // 이모티콘 메시지를 채팅 영역에 추가
     protected void appendEmoji(String senderLoginID, String time, String emojiFileName) {
         System.out.println("[개발용] : appendEmoji 호출됨: senderLoginID=" + senderLoginID + ", emojiFileName=" + emojiFileName);
         String os = System.getProperty("os.name").toLowerCase();
@@ -294,28 +309,23 @@ public class ChatWindow extends JFrame {
         }
 
         try {
-            // 이모티콘 로드
             ImageIcon icon = new ImageIcon(emojiFile.getAbsolutePath());
             if (icon.getIconWidth() == -1) {
                 System.err.println("이모티콘 이미지 로드 실패: " + emojiPath);
                 return;
             }
 
-            // 이모티콘 크기 조정
             Image image = icon.getImage().getScaledInstance(64, 64, Image.SCALE_SMOOTH);
             ImageIcon scaledIcon = new ImageIcon(image);
 
-            // 단락 정렬 설정
             String alignment = senderLoginID.equals(loginID) ? "right" : "left";
 
-            // 발신자의 프로필 이미지와 스타일 가져오기
             String[] profile = getSenderProfile(senderLoginID);
             String base64Image = profile[0];
             String senderStyle = profile[1];
 
             StyledDocument doc = chatArea.getStyledDocument();
 
-            // 시간 정보 삽입
             insertTime(doc, time, alignment);
 
             // 프로필 이미지 삽입과 이모티콘 삽입
@@ -331,7 +341,6 @@ public class ChatWindow extends JFrame {
                 insertProfileImage(doc, senderLoginID, base64Image, alignment);
             }
 
-            // 줄바꿈 추가
             doc.insertString(doc.getLength(), "\n", null);
 
         } catch (BadLocationException e) {
@@ -342,11 +351,10 @@ public class ChatWindow extends JFrame {
         chatArea.setCaretPosition(chatArea.getDocument().getLength());
     }
 
+    // 시간 문자열을 문서에 삽입
     private void insertTime(StyledDocument doc, String time, String alignment) throws BadLocationException {
-        // 시간 정보 삽입
         doc.insertString(doc.getLength(), "\n", null);
 
-        // 시간 스타일 생성
         Style timeStyle = chatArea.addStyle("TimeStyle_" + doc.getLength(), null);
         StyleConstants.setFontSize(timeStyle, 10);
         StyleConstants.setItalic(timeStyle, true);
@@ -359,6 +367,7 @@ public class ChatWindow extends JFrame {
         doc.insertString(doc.getLength(), time + "\n", timeStyle);
     }
 
+    // 프로필 이미지를 문서에 삽입
     private void insertProfileImage(StyledDocument doc, String senderLoginID, String base64Image, String alignment) throws BadLocationException {
         if (base64Image != null && !base64Image.isEmpty()) {
             ImageIcon profileIcon = getProfileImage(senderLoginID, base64Image);
@@ -370,30 +379,33 @@ public class ChatWindow extends JFrame {
         }
     }
 
+    // 메시지 텍스트를 문서에 삽입
     private void insertMessageText(StyledDocument doc, String message, String alignment) throws BadLocationException {
-        // 메시지 텍스트 삽입
         doc.insertString(doc.getLength(), message, null);
     }
 
+    // 이미지(일반 이미지)를 문서에 삽입
     private void insertImage(StyledDocument doc, ImageIcon imageIcon, String alignment) throws BadLocationException {
         Style imageStyle = chatArea.addStyle("ImageStyle_" + doc.getLength(), null);
         StyleConstants.setIcon(imageStyle, imageIcon);
         doc.insertString(doc.getLength(), " ", imageStyle);
     }
 
+    // 이모티콘 이미지를 문서에 삽입
     private void insertEmoji(StyledDocument doc, ImageIcon emojiIcon, String alignment) throws BadLocationException {
         Style emojiStyle = chatArea.addStyle("EmojiStyle_" + doc.getLength(), null);
         StyleConstants.setIcon(emojiStyle, emojiIcon);
         doc.insertString(doc.getLength(), " ", emojiStyle);
     }
 
+    // Base64 문자열을 ImageIcon으로 변환
     private ImageIcon base64ToImageIcon(String base64Image) {
         if (base64Image == null || base64Image.isEmpty()) return null;
         try {
             byte[] imageBytes = Base64.getDecoder().decode(base64Image);
             ImageIcon icon = new ImageIcon(imageBytes);
 
-            // 필요에 따라 이미지 크기 조정
+            // 이미지 크기를 32x32로 조정
             Image image = icon.getImage().getScaledInstance(32, 32, Image.SCALE_SMOOTH);
             return new ImageIcon(image);
         } catch (IllegalArgumentException e) {

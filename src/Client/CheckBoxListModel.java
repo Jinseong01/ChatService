@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+// 문자열 항목들의 체크 상태를 관리하는 ListModel
 public class CheckBoxListModel extends AbstractListModel<String> {
     private final List<String> items; // 항목 리스트
     private final List<Boolean> checked; // 선택 상태 리스트

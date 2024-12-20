@@ -23,6 +23,7 @@ public class FriendsPanel extends JPanel {
     private JLabel nameValueLabel = new JLabel();
     private JLabel statusMessageValueLabel = new JLabel();
 
+    // 패널 레이아웃 및 UI 컴포넌트 초기화
     public FriendsPanel() {
         setLayout(new BorderLayout());
 
@@ -39,14 +40,11 @@ public class FriendsPanel extends JPanel {
         bannerPanel.add(addFriendButton, BorderLayout.EAST);
         bannerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        // 사용자 정보 패널 (이미지와 이름 및 상태 메시지)
+        // 사용자 정보 패널 (프로필 이미지, 이름, 상태 메시지)
         JPanel userInfoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-
-        // 프로필 이미지 설정
         profileImageLabel.setPreferredSize(new Dimension(64, 64));
         userInfoPanel.add(profileImageLabel);
 
-        // 이름과 상태 메시지를 하나의 패널에 추가
         JPanel nameStatusPanel = new JPanel();
         nameStatusPanel.setLayout(new BoxLayout(nameStatusPanel, BoxLayout.Y_AXIS));
 
@@ -59,7 +57,7 @@ public class FriendsPanel extends JPanel {
 
         userInfoPanel.add(nameStatusPanel);
 
-        // 상단 패널
+        // 상단 패널(배너+사용자정보)
         JPanel topPanel = new JPanel();
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
         topPanel.add(bannerPanel);
@@ -82,24 +80,25 @@ public class FriendsPanel extends JPanel {
         friendRequestsListUI.setCellRenderer(new CustomFriendListCellRenderer());
         friendRequestsPanel.add(new JScrollPane(friendRequestsListUI), BorderLayout.CENTER);
 
+        // 친구 요청 처리 버튼 패널 (수락/거절)
         JPanel friendRequestButtons = new JPanel(new GridLayout(1, 2, 5, 5));
         friendRequestButtons.add(acceptFriendButton);
         friendRequestButtons.add(rejectFriendButton);
-
         friendRequestsPanel.add(friendRequestButtons, BorderLayout.SOUTH);
 
-        // 라벨과 친구 요청 패널을 감싸는 새로운 패널
+        // 친구 요청 레이블과 요청 패널을 담는 컨테이너
         JPanel friendRequestContainer = new JPanel();
         friendRequestContainer.setLayout(new BorderLayout());
         friendRequestContainer.add(friendRequestLabel, BorderLayout.NORTH);
         friendRequestContainer.add(friendRequestsPanel, BorderLayout.CENTER);
 
         // 전체 구성
-        add(topPanel, BorderLayout.PAGE_START);
-        add(friendsListPanel, BorderLayout.CENTER);
-        add(friendRequestContainer, BorderLayout.SOUTH);
+        add(topPanel, BorderLayout.PAGE_START); // 상단(배너+유저정보)
+        add(friendsListPanel, BorderLayout.CENTER); // 친구 목록
+        add(friendRequestContainer, BorderLayout.SOUTH); // 친구 요청 부분
     }
 
+    // Getter 메서드들: 외부에서 모델이나 UI 컴포넌트에 접근할 수 있도록 제공
     public DefaultListModel<UserSummary> getFriendsListModel() {
         return friendsListModel;
     }
@@ -136,13 +135,13 @@ public class FriendsPanel extends JPanel {
         return statusMessageValueLabel;
     }
 
+    // Base64 문자열을 디코딩한 뒤 ImageIcon으로 변환
+    // 프로필 이미지를 표시할 때 사용
     private ImageIcon base64ToImageIcon(String base64Image) {
         if (base64Image == null || base64Image.isEmpty()) return null;
         try {
             byte[] imageBytes = Base64.getDecoder().decode(base64Image);
             ImageIcon icon = new ImageIcon(imageBytes);
-
-            // 필요하다면 아이콘 크기 조정
             Image image = icon.getImage().getScaledInstance(64, 64, Image.SCALE_SMOOTH);
             return new ImageIcon(image);
         } catch (IllegalArgumentException e) {
@@ -151,6 +150,7 @@ public class FriendsPanel extends JPanel {
         }
     }
 
+    // 사용자 정보(이름, 상태 메시지, 프로필 이미지)를 업데이트
     public void updateUserInfo(User loginUser) {
         SwingUtilities.invokeLater(() -> {
             nameValueLabel.setText(loginUser.getUserName());
@@ -167,7 +167,7 @@ public class FriendsPanel extends JPanel {
         });
     }
 
-    // 커스텀 셀 렌더러 클래스
+    // 친구 목록 및 친구 요청 목록의 항목을 렌더링하는 Custom Cell Renderer 클래스
     private static class CustomFriendListCellRenderer extends JPanel implements ListCellRenderer<UserSummary> {
         private JLabel nameLabel;
         private JLabel statusMessageLabel;
@@ -175,9 +175,8 @@ public class FriendsPanel extends JPanel {
 
         public CustomFriendListCellRenderer() {
             setLayout(new BorderLayout());
-            setOpaque(true); // 배경색을 적용할 수 있도록 설정
+            setOpaque(true);
 
-            // 왼쪽: 이미지와 이름
             profileImageLabel = new JLabel();
             profileImageLabel.setPreferredSize(new Dimension(40, 40));
 
@@ -185,11 +184,10 @@ public class FriendsPanel extends JPanel {
             nameLabel.setFont(new Font("SansSerif", Font.PLAIN, 16));
 
             JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-            leftPanel.setOpaque(false); // 부모 배경색을 따름
+            leftPanel.setOpaque(false); // 배경색 투명 처리(상위 배경 사용)
             leftPanel.add(profileImageLabel);
             leftPanel.add(nameLabel);
 
-            // 오른쪽: 상태 메시지
             statusMessageLabel = new JLabel();
             statusMessageLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
             statusMessageLabel.setForeground(Color.GRAY);
@@ -209,7 +207,7 @@ public class FriendsPanel extends JPanel {
             String statusMessage = userSummary.getInformation();
             statusMessageLabel.setText(statusMessage != null ? statusMessage : "");
 
-            // 프로필 이미지 설정
+            // 프로필 이미지 설정 (Base64 -> ImageIcon)
             if (userSummary.getProfileImage() != null && !userSummary.getProfileImage().isEmpty()) {
                 try {
                     byte[] imageBytes = Base64.getDecoder().decode(userSummary.getProfileImage());

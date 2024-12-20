@@ -24,6 +24,7 @@ public class AuthPanel extends JPanel {
     private JTextField signupStatusMessageField = createSizedTextField(); // 상태 메시지 필드
     private JButton registerButton = createSizedButton("회원가입 완료");
 
+    // 로그인 패널과 회원가입 패널 생성
     public AuthPanel() {
         setLayout(cardLayout);
 
@@ -38,6 +39,7 @@ public class AuthPanel extends JPanel {
         add(signupPanel, "signup");
     }
 
+    // 로그인 패널
     private void createLoginPanel() {
         loginPanel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = createGbc();
@@ -59,6 +61,7 @@ public class AuthPanel extends JPanel {
         signupButton.addActionListener(e -> showSignupPanel());
     }
 
+    // 회원가입 패널
     private void createSignupPanel() {
         signupPanel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = createGbc();
@@ -82,6 +85,8 @@ public class AuthPanel extends JPanel {
         backButton.addActionListener(e -> showLoginPanel());
         addComponent(signupPanel, gbc, 0, 8, 2, backButton, 10);
     }
+
+    // --- 헬퍼 메서드들 ---
 
     private GridBagConstraints createGbc() {
         GridBagConstraints gbc = new GridBagConstraints();

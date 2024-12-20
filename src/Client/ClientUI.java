@@ -18,7 +18,7 @@ public class ClientUI extends JFrame {
     private CardLayout cardLayout = new CardLayout();
     private JPanel mainPanel = new JPanel(cardLayout);
 
-    // 패널들
+    // 주요 패널
     private AuthPanel authPanel;
     private FriendsPanel friendsPanel;
     private ChatPanel chatPanel;
@@ -30,6 +30,7 @@ public class ClientUI extends JFrame {
     // 로그인한 사용자 정보
     private User loginUser = null;
 
+    // UI 초기화
     public ClientUI() {
         initializeUI();
     }
@@ -42,10 +43,12 @@ public class ClientUI extends JFrame {
         this.clientHandler = handler;
     }
 
+    // 프레임 표시
     public void showFrame() {
         frame.setVisible(true);
     }
 
+    // UI 초기화 메서드
     private void initializeUI() {
         frame.setSize(500, 700);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -54,12 +57,13 @@ public class ClientUI extends JFrame {
         UIManager.put("Label.font", defaultFont);
         UIManager.put("Button.font", defaultFont);
 
+        // 패널 생성
         authPanel = new AuthPanel();
         friendsPanel = new FriendsPanel();
         chatPanel = new ChatPanel();
         memoPanel = new MemoPanel();
 
-        // 왼쪽 버튼 메뉴
+        // 왼쪽 메뉴 패널 (친구, 채팅, 메모 전환 버튼)
         menuPanel = new JPanel();
         menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.Y_AXIS)); // 세로 배치
         menuPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8)); // 패널 여백 추가
@@ -104,7 +108,7 @@ public class ClientUI extends JFrame {
         chatButton.addActionListener(e -> cardLayout.show(mainPanel, "chat"));
         memoButton.addActionListener(e -> cardLayout.show(mainPanel, "memo"));
 
-        // 전체 레이아웃
+        // 레이아웃 구성
         frame.setLayout(new BorderLayout());
 
         // 경계선이 포함된 왼쪽 메뉴 패널
@@ -127,12 +131,16 @@ public class ClientUI extends JFrame {
         friendsPanel.getAddFriendButton().addActionListener(e -> sendFriendRequest());
         friendsPanel.getAcceptFriendButton().addActionListener(e -> acceptFriendRequest());
         friendsPanel.getRejectFriendButton().addActionListener(e -> rejectFriendRequest());
+
+        // 프로필 이미지 클릭 시 변경
         friendsPanel.getProfileImageLabel().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 editProfileImageClick(); // 별도 메서드 호출만 수행
             }
         });
+
+        // 상태 메시지 클릭 시 변경
         friendsPanel.getStatusMessageValueLabel().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -163,6 +171,7 @@ public class ClientUI extends JFrame {
         });
     }
 
+    // 상태 메시지 수정 요청
     private void editStatusMessageClick() {
         String newStatus = JOptionPane.showInputDialog(getFrame(), "새 상태메시지를 입력하세요:");
         if (newStatus != null && !newStatus.trim().isEmpty()) {
@@ -170,6 +179,7 @@ public class ClientUI extends JFrame {
         }
     }
 
+    // 프로필 이미지 수정 요청
     private void editProfileImageClick() {
         JFileChooser fileChooser = new JFileChooser();
         int result = fileChooser.showOpenDialog(getFrame());
@@ -192,6 +202,7 @@ public class ClientUI extends JFrame {
         }
     }
 
+    // 화면 전환(회원가입, 로그인, 친구)
     public void switchToSignup() {
         authPanel.showSignupPanel();
         menuPanel.setVisible(false); // 메뉴 숨기기
@@ -207,6 +218,7 @@ public class ClientUI extends JFrame {
         menuPanel.setVisible(true); // 메뉴 표시
     }
 
+    // 로그인 시도
     private void attemptLogin() {
         String id = authPanel.getLoginUserField().getText().trim();
         String pw = new String(authPanel.getLoginPassField().getPassword()).trim();
@@ -217,6 +229,7 @@ public class ClientUI extends JFrame {
         if (clientHandler != null) clientHandler.sendMessage("/login " + id + " " + pw);
     }
 
+    // 회원가입 시도
     private void attemptSignup() {
         String id = authPanel.getSignupLoginIDField().getText().trim();
         String pw = new String(authPanel.getSignupLoginPWField().getPassword()).trim();
@@ -240,6 +253,7 @@ public class ClientUI extends JFrame {
         }
     }
 
+    // 친구 요청 보내기
     private void sendFriendRequest() {
         String friendLoginID = JOptionPane.showInputDialog(frame, "친구의 로그인 ID를 입력하세요:");
         if (friendLoginID != null && !friendLoginID.trim().isEmpty()) {
@@ -247,6 +261,7 @@ public class ClientUI extends JFrame {
         }
     }
 
+    // 친구 요청 수락
     private void acceptFriendRequest() {
         UserSummary selectedUserSummary = friendsPanel.getFriendRequestsListUI().getSelectedValue();
         if (selectedUserSummary == null) {
@@ -261,6 +276,7 @@ public class ClientUI extends JFrame {
         friendsPanel.getFriendRequestsModel().removeElement(selectedUserSummary); // 리스트에서 제거
     }
 
+    // 친구 요청 거절
     private void rejectFriendRequest() {
         UserSummary selectedUserSummary = friendsPanel.getFriendRequestsListUI().getSelectedValue();
         if (selectedUserSummary == null) {
@@ -275,6 +291,7 @@ public class ClientUI extends JFrame {
         friendsPanel.getFriendRequestsModel().removeElement(selectedUserSummary); // 리스트에서 제거
     }
 
+    // 채팅방 생성
     private void createChatRoom() {
         String chatRoomName = JOptionPane.showInputDialog(frame, "채팅방 이름을 입력하세요:");
         if (chatRoomName == null || chatRoomName.trim().isEmpty()) {
@@ -331,6 +348,7 @@ public class ClientUI extends JFrame {
         }
     }
 
+    // 메모 추가
     private void addMemo() {
         String memoContent = JOptionPane.showInputDialog(frame, "추가할 메모 내용을 입력하세요:");
         if (memoContent != null && !memoContent.trim().isEmpty()) {
@@ -339,6 +357,7 @@ public class ClientUI extends JFrame {
         }
     }
 
+    // 메모 수정
     private void editSelectedMemo() {
         String selectedMemo = memoPanel.getMemoListUI().getSelectedValue();
         if (selectedMemo == null) {
@@ -379,6 +398,7 @@ public class ClientUI extends JFrame {
         }
     }
 
+    // 메모 삭제
     private void deleteSelectedMemo() {
         String selectedMemo = memoPanel.getMemoListUI().getSelectedValue();
         if (selectedMemo == null) {
@@ -405,6 +425,7 @@ public class ClientUI extends JFrame {
         if (clientHandler != null) clientHandler.sendMessage("/deletememo " + index);
     }
 
+    // 친구 목록 업데이트
     public void updateFriendsList(List<UserSummary> userSummaries) {
         friendsPanel.getFriendsListModel().clear();
         for (UserSummary userSummary : userSummaries) {
@@ -412,48 +433,37 @@ public class ClientUI extends JFrame {
         }
     }
 
+    // 친구 요청 추가
     public void addFriendRequest(UserSummary requester) {
         friendsPanel.getFriendRequestsModel().addElement(requester);
         JOptionPane.showMessageDialog(frame, requester.getUserName() + "님이 친구 요청을 보냈습니다.");
     }
 
-
-    private String formatFriendDisplayName(UserSummary userSummary) {
-        // e.g., "홍길동 (loginID: hong123)"
-        return String.format("%s (ID: %s)", userSummary.getUserName(), userSummary.getLoginID());
-    }
-
-    private String extractLoginIDFromDisplayName(String displayName) {
-        // Extract loginID from display name, e.g., "홍길동 (ID: hong123)"
-        int idStart = displayName.indexOf("(ID: ");
-        int idEnd = displayName.indexOf(")", idStart);
-        if (idStart != -1 && idEnd != -1) {
-            return displayName.substring(idStart + 5, idEnd);
-        }
-        return null;
-    }
-
+    // 채팅방 추가
     public void addChatRoom(String chatRoomDisplay) {
         chatPanel.getChatRoomsListModel().addElement(chatRoomDisplay);
     }
 
+    // UI 초기화 (로그아웃 시 호출)
     public void resetUI() {
         switchToLogin();
-        // Clear lists
         friendsPanel.getFriendsListModel().clear();
         friendsPanel.getFriendRequestsModel().clear();
         chatPanel.getChatRoomsListModel().clear();
         memoPanel.getMemoListModel().clear();
     }
 
+    // 메모 목록 초기화
     public void clearMemos() {
         memoPanel.getMemoListModel().clear();
     }
 
+    // 메모 추가 표시
     public void addMemo(String memo) {
         memoPanel.getMemoListModel().addElement(memo);
     }
 
+    // 채팅방 더블클릭 시 새 창 열기
     private void openChatWindow() {
         String selectedChatRoom = chatPanel.getChatRoomsListUI().getSelectedValue();
         if (selectedChatRoom == null) {
@@ -492,7 +502,7 @@ public class ClientUI extends JFrame {
         DefaultListModel<UserSummary> model = friendsPanel.getFriendsListModel();
         boolean updated = false;
 
-        // 친구 목록에서 업데이트 시도
+        // 친구 목록 업데이트 시도
         for (int i = 0; i < model.size(); i++) {
             UserSummary userSummary = model.getElementAt(i);
             if (userSummary.getLoginID().equals(loginID)) {
@@ -561,7 +571,6 @@ public class ClientUI extends JFrame {
 
     // 자신의 프로필 이미지 업데이트
     public void updateOwnProfileImage(String newProfileImage) {
-        // 프로필 이미지 UI 업데이트
         ImageIcon profileIcon = null;
         if (newProfileImage != null && !newProfileImage.isEmpty()) {
             try {
@@ -590,15 +599,13 @@ public class ClientUI extends JFrame {
 
     // 자신의 상태 메시지 업데이트
     public void updateOwnStatusMessage(String newStatus) {
-        // 상태 메시지 UI 업데이트
         friendsPanel.getStatusMessageValueLabel().setText(newStatus);
-
-        // User 객체의 상태 메시지 업데이트
         if (loginUser != null) {
             loginUser.setInformation(newStatus);
         }
     }
 
+    // 친구 요청 목록 내 프로필 이미지 업데이트
     public void updateFriendRequestProfileImage(String loginID, String newProfileImage) {
         DefaultListModel<UserSummary> model = friendsPanel.getFriendRequestsModel();
         for (int i = 0; i < model.size(); i++) {
@@ -611,6 +618,7 @@ public class ClientUI extends JFrame {
         }
     }
 
+    // 친구 요청 목록 내 상태 메시지 업데이트
     public void updateFriendRequestStatus(String loginID, String newStatus) {
         DefaultListModel<UserSummary> model = friendsPanel.getFriendRequestsModel();
         for (int i = 0; i < model.size(); i++) {

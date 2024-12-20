@@ -12,7 +12,6 @@ public class ServerApp {
     private static final int PORT = 12345;
 
     // 이용자 목록 : { loginID : User }
-//    public static Map<String, User> userCredentials = new ConcurrentHashMap<>();
     public static Map<String, User> userCredentials = new ConcurrentHashMap<String, User>() {{
         put("test", new User("test", "1234", "짱구", "2001-01-01",  "허허이"));
         put("tmp1", new User("tmp1", "1234", "철수", "2001-02-21",  "학원..."));
@@ -29,18 +28,13 @@ public class ServerApp {
     public static Map<String, Set<String>> friendRequests = new ConcurrentHashMap<>();
 
     static {
-        // test 계정에 기본 친구 추가 (tmp1, tmp2)
         User testUser = userCredentials.get("test");
-//        testUser.getFriends().add("tmp1");
-//        testUser.getFriends().add("tmp2");
         friendRequests.put("test", ConcurrentHashMap.newKeySet());
 
         User testUser2 = userCredentials.get("tmp1");
-//        testUser2.getFriends().add("test");
         friendRequests.put("tmp1", ConcurrentHashMap.newKeySet());
 
         User testUser3 = userCredentials.get("tmp2");
-//        testUser3.getFriends().add("test");
         friendRequests.put("tmp2", ConcurrentHashMap.newKeySet());
 
         // test 계정에 기본 메모 추가
